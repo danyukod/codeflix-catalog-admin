@@ -1,0 +1,33 @@
+# Binaries for programs and plugins
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+
+# Test binary, built with `go test -c`
+*.test
+
+# Output of the go coverage tool, specifically when used with -html
+*.out
+
+# Dependency directories (remove the comment below if you want to vendor)
+# vendor/
+
+# GoLand / IntelliJ IDEA IDE files
+.idea/
+*.iws
+*.iml
+*.ipr
+
+# Project specific binaries (based on your cmd/admin structure)
+admin
+
+# OS generated files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
