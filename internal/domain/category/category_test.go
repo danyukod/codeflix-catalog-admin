@@ -12,9 +12,8 @@ func TestNewCategory(t *testing.T) {
 	t.Run(`Given Valid Params When Call New Category Then Instantiate a Category`, func(t *testing.T) {
 		expectedName := "Filmes"
 		expectedDescription := "A categoria mais assistida"
-		expectedIsActive := true
 
-		expectedCategory := NewCategory(expectedName, expectedDescription, expectedIsActive)
+		expectedCategory := NewCategory(expectedName, expectedDescription, true)
 
 		assert.NotNil(t, expectedCategory)
 		assert.NotNil(t, expectedCategory.GetId())
