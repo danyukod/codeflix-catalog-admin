@@ -3,11 +3,11 @@ package category
 import (
 	"time"
 
-	"github.com/google/uuid"
+	"github.com/danyukod/codeflix-catalog-admin/internal/domain/identifier"
 )
 
 type Category struct {
-	id          string
+	id          identifier.Identifier
 	name        string
 	description string
 	isActive    bool
@@ -18,17 +18,13 @@ type Category struct {
 
 func NewCategory(name, description string, isActive bool) *Category {
 	return &Category{
-		id:          uuid.NewString(),
+		id:          Unique(),
 		name:        name,
 		description: description,
 		isActive:    isActive,
 		createdAt:   time.Now(),
 		updatedAt:   time.Now(),
 	}
-}
-
-func (c *Category) GetId() string {
-	return c.id
 }
 
 func (c *Category) GetName() string {
