@@ -28,9 +28,10 @@ func NewCategory(name, description string, isActive bool) *Category {
 	}
 }
 
-func (c *Category) Validate() error {
+func (c *Category) Validate() []error {
+	var errorList []error
 	if c.name == "" {
-		return errors.New("name cannot be empty")
+		return append(errorList, errors.New("name cannot be empty"))
 	}
 	return nil
 }
