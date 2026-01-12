@@ -1,6 +1,7 @@
 package category
 
 import (
+	"errors"
 	"time"
 
 	"github.com/danyukod/codeflix-catalog-admin/internal/domain/identifier"
@@ -25,6 +26,13 @@ func NewCategory(name, description string, isActive bool) *Category {
 		createdAt:   time.Now(),
 		updatedAt:   time.Now(),
 	}
+}
+
+func (c *Category) Validate() error {
+	if c.name == "" {
+		return errors.New("name cannot be empty")
+	}
+	return nil
 }
 
 func (c *Category) GetName() string {
