@@ -1,10 +1,10 @@
 package category
 
 import (
-	"errors"
 	"time"
 
 	"github.com/danyukod/codeflix-catalog-admin/internal/domain/identifier"
+	"github.com/danyukod/codeflix-catalog-admin/internal/domain/validation"
 )
 
 type Category struct {
@@ -28,12 +28,8 @@ func NewCategory(name, description string, isActive bool) *Category {
 	}
 }
 
-func (c *Category) Validate() []error {
-	var errorList []error
-	if c.name == "" {
-		return append(errorList, errors.New("name cannot be empty"))
-	}
-	return nil
+func (c *Category) Validate(handler validation.Handler) {
+	NewValidator(c, handler).Validate()
 }
 
 func (c *Category) GetName() string {
