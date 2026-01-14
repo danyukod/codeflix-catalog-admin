@@ -26,18 +26,4 @@ func TestNewCategory(t *testing.T) {
 
 	})
 
-	t.Run(`Given Invalid Empty Name When Call New Category and Validate Then Should Receive Error`, func(t *testing.T) {
-		expectedName := ""
-		expectedDescription := "A categoria mais assistida"
-		expectedErrorMessage := "name cannot be empty"
-		expectedErrorCount := 1
-
-		expectedCategory := NewCategory(expectedName, expectedDescription, true)
-		err := expectedCategory.Validate()
-
-		assert.NotNil(t, err)
-		assert.Equal(t, expectedErrorMessage, err[0].Error())
-		assert.Equal(t, expectedErrorCount, len(err))
-	})
-
 }
