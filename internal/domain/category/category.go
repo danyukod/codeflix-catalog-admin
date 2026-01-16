@@ -11,47 +11,39 @@ type Category struct {
 	id          identifier.Identifier
 	name        string
 	description string
-	isActive    bool
+	active      bool
 	createdAt   time.Time
 	updatedAt   time.Time
 	deletedAt   *time.Time
 }
 
-func NewCategory(name, description string, isActive bool) *Category {
+func NewCategory(aName string, aDescription string, isActive bool) *Category {
+	id := Unique()
+	now := time.Now().UTC()
+	var deletedAt *time.Time
+	if !isActive {
+		deletedAt = &now
+	}
+
 	return &Category{
-		id:          Unique(),
-		name:        name,
-		description: description,
-		isActive:    isActive,
-		createdAt:   time.Now(),
-		updatedAt:   time.Now(),
+		id:          id,
+		name:        aName,
+		description: aDescription,
+		active:      isActive,
+		createdAt:   now,
+		updatedAt:   now,
+		deletedAt:   deletedAt,
 	}
 }
 
-func (c *Category) Validate(handler validation.Handler) {
-	NewValidator(c, handler).Validate()
+func (c *Category) Validate(handler validation.ValidationHandler) {
+	NewCategoryValidator(c, handler).Validate()
 }
 
-func (c *Category) GetName() string {
-	return c.name
-}
-
-func (c *Category) GetDescription() string {
-	return c.description
-}
-
-func (c *Category) IsActive() bool {
-	return c.isActive
-}
-
-func (c *Category) GetCreatedAt() time.Time {
-	return c.createdAt
-}
-
-func (c *Category) GetUpdatedAt() time.Time {
-	return c.updatedAt
-}
-
-func (c *Category) GetDeletedAt() *time.Time {
-	return c.deletedAt
-}
+func (c *Category) GetId() identifier.Identifier { return c.id }
+func (c *Category) GetName() string              { return c.name }
+func (c *Category) GetDescription() string       { return c.description }
+func (c *Category) IsActive() bool               { return c.active }
+func (c *Category) GetCreatedAt() time.Time      { return c.createdAt }
+func (c *Category) GetUpdatedAt() time.Time      { return c.updatedAt }
+func (c *Category) GetDeletedAt() *time.Time     { return c.deletedAt }

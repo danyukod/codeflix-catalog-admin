@@ -1,14 +1,20 @@
 package validation
 
-type Handler interface {
-	Handle(error) error
-	AppendError(error)
-	AppendErrors([]error)
-	Validate(Validation)
-	HasErrors() bool
-	Errors() []error
+type Error struct {
+	Message string
 }
 
-type Validation interface {
-	Validate()
+func NewError(message string) Error {
+	return Error{Message: message}
+}
+
+type ValidationHandler interface {
+	Append(err Error) ValidationHandler
+	AppendHandler(handler ValidationHandler) ValidationHandler
+	GetErrors() []Error
+	HasError() bool
+}
+
+func HasError(h ValidationHandler) bool {
+	return len(h.GetErrors()) > 0
 }
