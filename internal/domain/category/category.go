@@ -40,6 +40,12 @@ func (c *Category) Validate(handler validation.ValidationHandler) {
 	NewCategoryValidator(c, handler).Validate()
 }
 
+func (c *Category) Deactivate() {
+	c.active = false
+	c.updatedAt = time.Now().UTC()
+	c.deletedAt = &c.updatedAt
+}
+
 func (c *Category) GetId() identifier.Identifier { return c.id }
 func (c *Category) GetName() string              { return c.name }
 func (c *Category) GetDescription() string       { return c.description }
