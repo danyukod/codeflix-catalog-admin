@@ -1,4 +1,4 @@
-package exception
+package handler
 
 import "github.com/danyukod/codeflix-catalog-admin/internal/domain/validation"
 
