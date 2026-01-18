@@ -36,3 +36,4 @@ To run the admin service:
 ```bash
 go run cmd/admin/main.go
 ```
+
