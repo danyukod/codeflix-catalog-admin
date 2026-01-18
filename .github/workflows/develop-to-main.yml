@@ -1,0 +1,25 @@
+name: Develop to Main PR
+
+on:
+  push:
+    branches:
+      - develop
+
+jobs:
+  create-pr-to-main:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Create Pull Request to Main
+        uses: peter-evans/create-pull-request@v6
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          base: main
+          branch: develop
+          title: "release: merge develop into main"
+          body: "Automated PR from develop to main after successful integration."
+          labels: |
+            automated-pr
+            release
