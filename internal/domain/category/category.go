@@ -46,6 +46,12 @@ func (c *Category) Deactivate() {
 	c.deletedAt = &c.updatedAt
 }
 
+func (c *Category) Activate() {
+	c.active = true
+	c.updatedAt = time.Now().UTC()
+	c.deletedAt = nil
+}
+
 func (c *Category) GetId() identifier.Identifier { return c.id }
 func (c *Category) GetName() string              { return c.name }
 func (c *Category) GetDescription() string       { return c.description }
