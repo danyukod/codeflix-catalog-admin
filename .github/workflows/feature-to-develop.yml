@@ -1,0 +1,26 @@
+
+name: Feature to Develop PR
+
+on:
+  push:
+    branches:
+      - 'feature/*'
+
+jobs:
+  create-pr-to-develop:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Create Pull Request to Develop
+        uses: peter-evans/create-pull-request@v6
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          base: develop
+          branch: ${{ github.ref_name }}
+          title: "feat: merge ${{ github.ref_name }} into develop"
+          body: "Automated PR from feature branch to develop."
+          labels: |
+            automated-pr
+            feature
