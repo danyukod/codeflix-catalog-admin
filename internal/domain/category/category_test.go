@@ -81,13 +81,14 @@ func TestCategory_Validate(t *testing.T) {
 	})
 }
 
-func TestCategory_Deactivate(t *testing.T) {
-	t.Run("Given a Active Cateogry When Call Deactivate Then Should Change Category To Inactive", func(t *testing.T) {
+func TestCategory_DeactivateAndActivate(t *testing.T) {
+	t.Run("Given a Active Category When Call Deactivate Then Should Change Category To Inactive", func(t *testing.T) {
 		category := NewCategory("Filmes", "Description", true)
 		handler := handler.NewNotification()
 
 		category.Validate(handler)
 
+		createdAt := category.GetCreatedAt()
 		updatedAt := category.GetUpdatedAt()
 
 		assert.True(t, category.IsActive())
@@ -100,5 +101,26 @@ func TestCategory_Deactivate(t *testing.T) {
 		assert.False(t, category.IsActive())
 		assert.NotNil(t, category.GetDeletedAt())
 		assert.NotEqual(t, updatedAt, category.GetUpdatedAt())
+		assert.Equal(t, createdAt, category.GetCreatedAt())
+	})
+
+	t.Run("Given a Inactive Category When Call Activate Then Should Change To Activate", func(t *testing.T) {
+		category := NewCategory("Filmes", "Description", false)
+		handler := handler.NewNotification()
+
+		category.Validate(handler)
+
+		createdAt := category.GetCreatedAt()
+		updatedAt := category.GetUpdatedAt()
+
+		assert.False(t, category.IsActive())
+		assert.NotNil(t, category.GetDeletedAt())
+
+		category.Activate()
+
+		assert.True(t, category.IsActive())
+		assert.Nil(t, category.GetDeletedAt())
+		assert.NotEqual(t, updatedAt, category.GetUpdatedAt())
+		assert.Equal(t, createdAt, category.GetCreatedAt())
 	})
 }
