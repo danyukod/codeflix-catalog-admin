@@ -40,53 +40,53 @@ func TestNewCategory(t *testing.T) {
 func TestCategory_Validate(t *testing.T) {
 	t.Run("Given Invalid Empty Name When Call Validate Then Should Receive Error", func(t *testing.T) {
 		category := NewCategory("  ", "Description", true)
-		handler := handler.NewNotification()
+		notificationHandler := handler.NewNotification()
 
-		category.Validate(handler)
+		category.Validate(notificationHandler)
 
-		assert.True(t, handler.HasError())
-		assert.Equal(t, 1, len(handler.GetErrors()))
-		assert.Equal(t, "'name' should not be empty", handler.GetErrors()[0].Message)
+		assert.True(t, notificationHandler.HasError())
+		assert.Equal(t, 1, len(notificationHandler.GetErrors()))
+		assert.Equal(t, "'name' should not be empty", notificationHandler.GetErrors()[0].Message)
 	})
 
 	t.Run("Given Name Length Less Than 3 When Call Validate Then Should Receive Error", func(t *testing.T) {
 		category := NewCategory("Fi", "Description", true)
-		handler := handler.NewNotification()
+		notificationHandler := handler.NewNotification()
 
-		category.Validate(handler)
+		category.Validate(notificationHandler)
 
-		assert.True(t, handler.HasError())
-		assert.Equal(t, 1, len(handler.GetErrors()))
-		assert.Equal(t, "'name' must be between 3 and 255 characters", handler.GetErrors()[0].Message)
+		assert.True(t, notificationHandler.HasError())
+		assert.Equal(t, 1, len(notificationHandler.GetErrors()))
+		assert.Equal(t, "'name' must be between 3 and 255 characters", notificationHandler.GetErrors()[0].Message)
 	})
 
 	t.Run("Given Name Length Greater Than 255 When Call Validate Then Should Receive Error", func(t *testing.T) {
 		invalidName := strings.Repeat("a", 256)
 		category := NewCategory(invalidName, "Description", true)
-		handler := handler.NewNotification()
+		notificationHandler := handler.NewNotification()
 
-		category.Validate(handler)
+		category.Validate(notificationHandler)
 
-		assert.True(t, handler.HasError())
-		assert.Equal(t, 1, len(handler.GetErrors()))
+		assert.True(t, notificationHandler.HasError())
+		assert.Equal(t, 1, len(notificationHandler.GetErrors()))
 	})
 
 	t.Run("Given Valid Category When Call Validate Then Should Not Receive Error", func(t *testing.T) {
 		category := NewCategory("Filmes", "Description", true)
-		handler := handler.NewNotification()
+		notificationHandler := handler.NewNotification()
 
-		category.Validate(handler)
+		category.Validate(notificationHandler)
 
-		assert.False(t, handler.HasError())
+		assert.False(t, notificationHandler.HasError())
 	})
 }
 
 func TestCategory_DeactivateAndActivate(t *testing.T) {
 	t.Run("Given a Active Category When Call Deactivate Then Should Change Category To Inactive", func(t *testing.T) {
 		category := NewCategory("Filmes", "Description", true)
-		handler := handler.NewNotification()
+		notificationHandler := handler.NewNotification()
 
-		category.Validate(handler)
+		category.Validate(notificationHandler)
 
 		createdAt := category.GetCreatedAt()
 		updatedAt := category.GetUpdatedAt()
@@ -106,9 +106,9 @@ func TestCategory_DeactivateAndActivate(t *testing.T) {
 
 	t.Run("Given a Inactive Category When Call Activate Then Should Change To Activate", func(t *testing.T) {
 		category := NewCategory("Filmes", "Description", false)
-		handler := handler.NewNotification()
+		notificationHandler := handler.NewNotification()
 
-		category.Validate(handler)
+		category.Validate(notificationHandler)
 
 		createdAt := category.GetCreatedAt()
 		updatedAt := category.GetUpdatedAt()
@@ -126,9 +126,9 @@ func TestCategory_DeactivateAndActivate(t *testing.T) {
 
 	t.Run("Given a Valid Category When call Update Then Should Change Category Values", func(t *testing.T) {
 		category := NewCategory("Filmes", "Description", true)
-		handler := handler.NewNotification()
+		notificationHandler := handler.NewNotification()
 
-		category.Validate(handler)
+		category.Validate(notificationHandler)
 
 		createdAt := category.GetCreatedAt()
 		updatedAt := category.GetUpdatedAt()
