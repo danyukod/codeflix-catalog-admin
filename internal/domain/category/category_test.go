@@ -123,4 +123,29 @@ func TestCategory_DeactivateAndActivate(t *testing.T) {
 		assert.NotEqual(t, updatedAt, category.GetUpdatedAt())
 		assert.Equal(t, createdAt, category.GetCreatedAt())
 	})
+
+	t.Run("Given a Valid Category When call Update Then Should Change Category Values", func(t *testing.T) {
+		category := NewCategory("Filmes", "Description", true)
+		handler := handler.NewNotification()
+
+		category.Validate(handler)
+
+		createdAt := category.GetCreatedAt()
+		updatedAt := category.GetUpdatedAt()
+
+		assert.True(t, category.IsActive())
+		assert.Nil(t, category.GetDeletedAt())
+
+		expectedName := "Filmes2"
+		expectedDescription := "Description2"
+		category.Update(expectedName, expectedDescription, true)
+
+		assert.True(t, category.IsActive())
+		assert.Nil(t, category.GetDeletedAt())
+		assert.NotEqual(t, updatedAt, category.GetUpdatedAt())
+		assert.Equal(t, createdAt, category.GetCreatedAt())
+		assert.Equal(t, expectedName, category.GetName())
+		assert.Equal(t, expectedDescription, category.GetDescription())
+
+	})
 }
