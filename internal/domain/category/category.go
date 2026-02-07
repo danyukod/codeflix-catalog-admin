@@ -52,6 +52,18 @@ func (c *Category) Activate() {
 	c.deletedAt = nil
 }
 
+func (c *Category) Update(aName, aDescription string, isActive bool) {
+	if isActive {
+		c.Activate()
+	} else {
+		c.Deactivate()
+	}
+
+	c.name = aName
+	c.description = aDescription
+	c.updatedAt = time.Now().UTC()
+}
+
 func (c *Category) GetId() identifier.Identifier { return c.id }
 func (c *Category) GetName() string              { return c.name }
 func (c *Category) GetDescription() string       { return c.description }
