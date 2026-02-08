@@ -11,10 +11,8 @@ import (
 )
 
 func TestCreateCategoryUsecase(t *testing.T) {
-	// 1. Teste do caminho feliz
-	// 2. Teste passando uma propriedade invalida (name)
-	// 3. Teste Criando uma categoria inativa
-	// 4. Teste simulando um erro generico vindo do gateway
+	gateway := new(mocks.CategoryGatewayMock)
+	useCase := NewCreateCategoryUseCase(gateway)
 
 	t.Run("Given a valid command when calls create category should return category id", func(t *testing.T) {
 		ctx := context.TODO()
@@ -25,8 +23,6 @@ func TestCreateCategoryUsecase(t *testing.T) {
 
 		var cmd CreateCategoryCommand
 		aCommand := cmd.With(expectedName, expectedDescription, expectedIsActive)
-
-		gateway := new(mocks.CategoryGatewayMock)
 
 		gateway.
 			On("Create", mock.MatchedBy(func(c *category.Category) bool {
@@ -46,13 +42,62 @@ func TestCreateCategoryUsecase(t *testing.T) {
 
 		// run the code-under-test here...
 
-		useCase := NewCreateCategoryUseCase(gateway)
-
 		actualOutput, err := useCase.Execute(ctx, aCommand)
 
 		assert.Nil(t, err)
 		assert.NotNil(t, actualOutput)
 		assert.NotNil(t, actualOutput.GetId())
 		gateway.AssertExpectations(t) // validates "once" + predicate matched
+	})
+
+	t.Run("Given a valida command with an invalid name when calls create category should return error", func(t *testing.T) {
+		ctx := context.TODO()
+		expectedName := ""
+		expectedDescription := "A categoria mais assistida"
+		expectedIsActive := true
+		expectedError := "validation failed: 'name' should not be empty"
+
+		var cmd CreateCategoryCommand
+		aCommand := cmd.With(expectedName, expectedDescription, expectedIsActive)
+
+		actualOutput, err := useCase.Execute(ctx, aCommand)
+
+		gateway.AssertNotCalled(t, "Create")
+		assert.EqualError(t, err, expectedError)
+		assert.Nil(t, actualOutput)
+	})
+
+	t.Run("Given a valid command with a inactive category when calls create category should return a inactive category id", func(t *testing.T) {
+		ctx := context.TODO()
+		expectedName := "Filmes"
+		expectedDescription := "A categoria mais assistida"
+		expectedIsActive := false
+		expectedCategory := category.NewCategory(expectedName, expectedDescription, expectedIsActive)
+
+		var cmd CreateCategoryCommand
+		aCommand := cmd.With(expectedName, expectedDescription, expectedIsActive)
+
+		gateway.
+			On("Create", mock.MatchedBy(func(c *category.Category) bool {
+				if c == nil {
+					return false
+				}
+				return c.GetName() == expectedName &&
+					c.GetDescription() == expectedDescription &&
+					c.IsActive() == expectedIsActive &&
+					c.GetId() != nil &&
+					!c.GetCreatedAt().IsZero() &&
+					!c.GetUpdatedAt().IsZero() &&
+					!c.GetDeletedAt().IsZero()
+			})).
+			Return(expectedCategory, nil).
+			Once()
+
+		actualOutput, err := useCase.Execute(ctx, aCommand)
+
+		assert.Nil(t, err)
+		assert.NotNil(t, actualOutput)
+		assert.NotNil(t, actualOutput.GetId())
+		gateway.AssertExpectations(t)
 	})
 }
