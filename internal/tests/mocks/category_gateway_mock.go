@@ -12,6 +12,9 @@ type CategoryGatewayMock struct {
 
 func (m *CategoryGatewayMock) Create(c *category.Category) (*category.Category, error) {
 	args := m.Called(c)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
 	Category := args.Get(0)
 	return Category.(*category.Category), args.Error(1)
 }
