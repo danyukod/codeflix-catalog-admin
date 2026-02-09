@@ -11,55 +11,59 @@ import (
 	"github.com/stretchr/testify/mock"
 )
 
-func TestCreateCategoryUsecase(t *testing.T) {
+func TestCreateCategoryUseCase(t *testing.T) {
 	gateway := new(mocks.CategoryGatewayMock)
 	useCase := NewCreateCategoryUseCase(gateway)
+	matchesCreatedCategory := func(expectedName, expectedDescription string, expectedIsActive bool) func(*category.Category) bool {
+		return func(c *category.Category) bool {
+			if c == nil {
+				return false
+			}
+
+			if c.GetName() != expectedName || c.GetDescription() != expectedDescription || c.IsActive() != expectedIsActive {
+				return false
+			}
+
+			if c.GetId() == nil || c.GetCreatedAt().IsZero() || c.GetUpdatedAt().IsZero() {
+				return false
+			}
+
+			deletedAt := c.GetDeletedAt()
+			deletedAtOK := (expectedIsActive && deletedAt == nil) || (!expectedIsActive && deletedAt != nil && !deletedAt.IsZero())
+			return deletedAtOK
+		}
+	}
 
 	t.Run("Given a valid command when calls create category should return category id", func(t *testing.T) {
 		ctx := context.TODO()
 		expectedName := "Filmes"
 		expectedDescription := "A categoria mais assistida"
-		expectedIsActive := true
-		expectedCategory := category.NewCategory(expectedName, expectedDescription, expectedIsActive)
+		expectedCategory := category.NewCategory(expectedName, expectedDescription, true)
 
 		var cmd CreateCategoryCommand
-		aCommand := cmd.With(expectedName, expectedDescription, expectedIsActive)
+		aCommand := cmd.With(expectedName, expectedDescription, true)
 
 		gateway.
-			On("Create", mock.MatchedBy(func(c *category.Category) bool {
-				if c == nil {
-					return false
-				}
-				return c.GetName() == expectedName &&
-					c.GetDescription() == expectedDescription &&
-					c.IsActive() == expectedIsActive &&
-					c.GetId() != nil &&
-					!c.GetCreatedAt().IsZero() &&
-					!c.GetUpdatedAt().IsZero() &&
-					c.GetDeletedAt() == nil
-			})).
+			On("Create", mock.MatchedBy(matchesCreatedCategory(expectedName, expectedDescription, true))).
 			Return(expectedCategory, nil).
 			Once()
-
-		// run the code-under-test here...
 
 		actualOutput, err := useCase.Execute(ctx, aCommand)
 
 		assert.Nil(t, err)
 		assert.NotNil(t, actualOutput)
 		assert.NotNil(t, actualOutput.GetId())
-		gateway.AssertExpectations(t) // validates "once" + predicate matched
+		gateway.AssertExpectations(t)
 	})
 
 	t.Run("Given a valida command with an invalid name when calls create category should return error", func(t *testing.T) {
 		ctx := context.TODO()
 		expectedName := ""
 		expectedDescription := "A categoria mais assistida"
-		expectedIsActive := true
 		expectedError := "validation failed: 'name' should not be empty"
 
 		var cmd CreateCategoryCommand
-		aCommand := cmd.With(expectedName, expectedDescription, expectedIsActive)
+		aCommand := cmd.With(expectedName, expectedDescription, true)
 
 		actualOutput, err := useCase.Execute(ctx, aCommand)
 
@@ -72,25 +76,13 @@ func TestCreateCategoryUsecase(t *testing.T) {
 		ctx := context.TODO()
 		expectedName := "Filmes"
 		expectedDescription := "A categoria mais assistida"
-		expectedIsActive := false
-		expectedCategory := category.NewCategory(expectedName, expectedDescription, expectedIsActive)
+		expectedCategory := category.NewCategory(expectedName, expectedDescription, false)
 
 		var cmd CreateCategoryCommand
-		aCommand := cmd.With(expectedName, expectedDescription, expectedIsActive)
+		aCommand := cmd.With(expectedName, expectedDescription, false)
 
 		gateway.
-			On("Create", mock.MatchedBy(func(c *category.Category) bool {
-				if c == nil {
-					return false
-				}
-				return c.GetName() == expectedName &&
-					c.GetDescription() == expectedDescription &&
-					c.IsActive() == expectedIsActive &&
-					c.GetId() != nil &&
-					!c.GetCreatedAt().IsZero() &&
-					!c.GetUpdatedAt().IsZero() &&
-					!c.GetDeletedAt().IsZero()
-			})).
+			On("Create", mock.MatchedBy(matchesCreatedCategory(expectedName, expectedDescription, false))).
 			Return(expectedCategory, nil).
 			Once()
 
@@ -106,34 +98,21 @@ func TestCreateCategoryUsecase(t *testing.T) {
 		ctx := context.TODO()
 		expectedName := "Filmes"
 		expectedDescription := "A categoria mais assistida"
-		expectedIsActive := true
 		expectedError := "random error of gateway"
 
 		var cmd CreateCategoryCommand
-		aCommand := cmd.With(expectedName, expectedDescription, expectedIsActive)
+		aCommand := cmd.With(expectedName, expectedDescription, true)
 
 		gateway.
-			On("Create", mock.MatchedBy(func(c *category.Category) bool {
-				if c == nil {
-					return false
-				}
-				return c.GetName() == expectedName &&
-					c.GetDescription() == expectedDescription &&
-					c.IsActive() == expectedIsActive &&
-					c.GetId() != nil &&
-					!c.GetCreatedAt().IsZero() &&
-					!c.GetUpdatedAt().IsZero() &&
-					c.GetDeletedAt() == nil
-			})).
+			On("Create", mock.MatchedBy(matchesCreatedCategory(expectedName, expectedDescription, true))).
 			Return(nil, errors.New(expectedError)).
 			Once()
-
-		// run the code-under-test here...
 
 		actualOutput, err := useCase.Execute(ctx, aCommand)
 
 		assert.Nil(t, actualOutput)
 		assert.EqualError(t, err, expectedError)
-		gateway.AssertExpectations(t) // validates "once" + predicate matched
+		gateway.AssertExpectations(t)
 	})
+
 }
