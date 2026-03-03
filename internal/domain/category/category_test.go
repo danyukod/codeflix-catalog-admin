@@ -15,7 +15,7 @@ func TestNewCategory(t *testing.T) {
 
 		expectedCategory := NewCategory(expectedName, expectedDescription, true)
 
-		assert.NotNil(t, expectedCategory.GetId().GetIdentifier())
+		assert.NotNil(t, expectedCategory.GetId().GetValue())
 		assert.NotNil(t, expectedCategory)
 		assert.Equal(t, expectedName, expectedCategory.GetName())
 		assert.Equal(t, expectedDescription, expectedCategory.GetDescription())
