@@ -56,9 +56,9 @@ func joinValidationMessages(n *handler.Notification) string {
 		return ""
 	}
 
-	msgs := make([]string, 0, len(errs))
+	messages := make([]string, 0, len(errs))
 	for _, e := range errs {
-		msgs = append(msgs, e.Message)
+		messages = append(messages, e.Message)
 	}
-	return strings.Join(msgs, "; ")
+	return strings.Join(messages, "; ")
 }
