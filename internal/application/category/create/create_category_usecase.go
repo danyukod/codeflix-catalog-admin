@@ -29,17 +29,14 @@ func (uc *CreateCategoryUseCase) Execute(ctx context.Context, aCommand *CreateCa
 	aDescription := aCommand.description
 	isActive := aCommand.isActive
 
-	// Create domain entity from command
 	aCategory := category.NewCategory(aName, aDescription, isActive)
 
-	// Validate
 	notification := handler.NewNotification()
 	aCategory.Validate(notification)
 	if notification.HasError() {
 		return nil, fmt.Errorf("validation failed: %s", joinValidationMessages(notification))
 	}
 
-	// Persist
 	created, err := uc.gateway.Create(aCategory)
 	if err != nil {
 		return nil, err
