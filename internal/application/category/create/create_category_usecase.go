@@ -9,18 +9,18 @@ import (
 	"github.com/danyukod/codeflix-catalog-admin/internal/domain/exception/handler"
 )
 
-type CreateCategoryUseCase struct {
+type CategoryUseCase struct {
 	gateway category.Gateway
 }
 
-func NewCreateCategoryUseCase(gateway category.Gateway) *CreateCategoryUseCase {
+func NewCreateCategoryUseCase(gateway category.Gateway) *CategoryUseCase {
 	if gateway == nil {
 		panic("gateway cannot be nil")
 	}
-	return &CreateCategoryUseCase{gateway: gateway}
+	return &CategoryUseCase{gateway: gateway}
 }
 
-func (uc *CreateCategoryUseCase) Execute(ctx context.Context, aCommand *CreateCategoryCommand) (*CreateCategoryOutput, error) {
+func (uc *CategoryUseCase) Execute(ctx context.Context, aCommand *CreateCategoryCommand) (*CreateCategoryOutput, error) {
 	if aCommand == nil {
 		return nil, fmt.Errorf("aCommand cannot be nil")
 	}
