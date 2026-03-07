@@ -20,7 +20,7 @@ func NewCreateCategoryUseCase(gateway category.Gateway) *CategoryUseCase {
 	return &CategoryUseCase{gateway: gateway}
 }
 
-func (uc *CategoryUseCase) Execute(ctx context.Context, aCommand *CreateCategoryCommand) (*CreateCategoryOutput, error) {
+func (uc *CategoryUseCase) Execute(ctx context.Context, aCommand *CategoryCommand) (*CategoryOutput, error) {
 	if aCommand == nil {
 		return nil, fmt.Errorf("aCommand cannot be nil")
 	}
@@ -45,7 +45,7 @@ func (uc *CategoryUseCase) Execute(ctx context.Context, aCommand *CreateCategory
 		return nil, fmt.Errorf("gateway returned nil category")
 	}
 
-	var createCategoryOutput CreateCategoryOutput
+	var createCategoryOutput CategoryOutput
 	out := createCategoryOutput.From(*created)
 	return out, nil
 }

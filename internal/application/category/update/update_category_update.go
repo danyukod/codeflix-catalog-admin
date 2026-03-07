@@ -5,23 +5,14 @@ import (
 	"github.com/danyukod/codeflix-catalog-admin/internal/domain/identifier"
 )
 
-type UpdateCategoryOutput struct {
-	id          identifier.Identifier
-	name        string
-	description string
-	isActive    bool
+type CategoryOutput struct {
+	id identifier.Identifier
 }
 
-func (u UpdateCategoryOutput) From(aCategory category.Category) *UpdateCategoryOutput {
-	return &UpdateCategoryOutput{
-		id:          aCategory.GetId(),
-		name:        aCategory.GetName(),
-		description: aCategory.GetDescription(),
-		isActive:    aCategory.IsActive(),
+func (u CategoryOutput) From(aCategory category.Category) *CategoryOutput {
+	return &CategoryOutput{
+		id: aCategory.GetId(),
 	}
 }
 
-func (u UpdateCategoryOutput) GetId() identifier.Identifier { return u.id }
-func (u UpdateCategoryOutput) GetName() string              { return u.name }
-func (u UpdateCategoryOutput) GetDescription() string       { return u.description }
-func (u UpdateCategoryOutput) IsActive() bool               { return u.isActive }
+func (u CategoryOutput) GetId() identifier.Identifier { return u.id }

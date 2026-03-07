@@ -40,7 +40,7 @@ func TestCreateCategoryUseCase(t *testing.T) {
 		expectedDescription := "A categoria mais assistida"
 		expectedCategory := category.NewCategory(expectedName, expectedDescription, true)
 
-		var cmd CreateCategoryCommand
+		var cmd CategoryCommand
 		aCommand := cmd.With(expectedName, expectedDescription, true)
 
 		gateway.
@@ -62,7 +62,7 @@ func TestCreateCategoryUseCase(t *testing.T) {
 		expectedDescription := "A categoria mais assistida"
 		expectedError := "validation failed: 'name' should not be empty"
 
-		var cmd CreateCategoryCommand
+		var cmd CategoryCommand
 		aCommand := cmd.With(expectedName, expectedDescription, true)
 
 		actualOutput, err := useCase.Execute(ctx, aCommand)
@@ -78,7 +78,7 @@ func TestCreateCategoryUseCase(t *testing.T) {
 		expectedDescription := "A categoria mais assistida"
 		expectedCategory := category.NewCategory(expectedName, expectedDescription, false)
 
-		var cmd CreateCategoryCommand
+		var cmd CategoryCommand
 		aCommand := cmd.With(expectedName, expectedDescription, false)
 
 		gateway.
@@ -100,7 +100,7 @@ func TestCreateCategoryUseCase(t *testing.T) {
 		expectedDescription := "A categoria mais assistida"
 		expectedError := "random error of gateway"
 
-		var cmd CreateCategoryCommand
+		var cmd CategoryCommand
 		aCommand := cmd.With(expectedName, expectedDescription, true)
 
 		gateway.

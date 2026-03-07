@@ -5,16 +5,16 @@ import (
 	"github.com/danyukod/codeflix-catalog-admin/internal/domain/identifier"
 )
 
-type CreateCategoryOutput struct {
+type CategoryOutput struct {
 	id identifier.Identifier
 }
 
-func (c CreateCategoryOutput) From(aCategory category.Category) *CreateCategoryOutput {
-	return &CreateCategoryOutput{
+func (c CategoryOutput) From(aCategory category.Category) *CategoryOutput {
+	return &CategoryOutput{
 		id: aCategory.GetId(),
 	}
 }
 
-func (c CreateCategoryOutput) GetId() identifier.Identifier {
+func (c CategoryOutput) GetId() identifier.Identifier {
 	return c.id
 }

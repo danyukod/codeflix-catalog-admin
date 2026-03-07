@@ -3,8 +3,10 @@ package update
 import (
 	"context"
 	"fmt"
+	"strings"
 
 	"github.com/danyukod/codeflix-catalog-admin/internal/domain/category"
+	"github.com/danyukod/codeflix-catalog-admin/internal/domain/exception/handler"
 	"github.com/danyukod/codeflix-catalog-admin/internal/tests/mocks"
 )
 
@@ -18,12 +20,12 @@ func NewUpdateCategoryUsecase(gateway *mocks.CategoryGatewayMock) *CategoryUseCa
 	}
 }
 
-func (uc *CategoryUseCase) Execute(ctx context.Context, aCommand *UpdateCategoryCommand) (*UpdateCategoryOutput, error) {
+func (uc *CategoryUseCase) Execute(ctx context.Context, aCommand *CategoryCommand) (*CategoryOutput, error) {
 	if aCommand == nil {
 		return nil, fmt.Errorf("aCommand cannot be nil")
 	}
 
-	aCategoryId, err := category.FromString(aCommand.id)
+	anId, err := category.FromString(aCommand.id)
 	if err != nil {
 		return nil, err
 	}
@@ -32,14 +34,43 @@ func (uc *CategoryUseCase) Execute(ctx context.Context, aCommand *UpdateCategory
 	aDescription := aCommand.description
 	isActive := aCommand.isActive
 
-	aCategory, err := uc.gateway.FindById(aCategoryId)
+	aCategory, err := uc.gateway.FindById(anId)
+	if err != nil {
+		return nil, err
+	}
+	if aCategory == nil {
+		return nil, fmt.Errorf("category with ID %s was not found", anId.GetValue())
+	}
+
+	aCategory.Update(aName, aDescription, isActive)
+
+	notification := handler.NewNotification()
+	aCategory.Validate(notification)
+
+	if notification.HasError() {
+		return nil, fmt.Errorf("validation failed: %s", joinValidationMessages(notification))
+	}
+
+	err = uc.gateway.Update(aCategory)
 	if err != nil {
 		return nil, err
 	}
 
-	if aCategory == nil {
-		return nil, fmt.Errorf("category not found")
+	var updateCategoryOutput CategoryOutput
+	out := updateCategoryOutput.From(*aCategory)
+
+	return out, nil
+}
+
+func joinValidationMessages(n *handler.Notification) string {
+	errs := n.GetErrors()
+	if len(errs) == 0 {
+		return ""
 	}
 
-	updatedCategory, err := uc.gateway.Update()
+	messages := make([]string, 0, len(errs))
+	for _, e := range errs {
+		messages = append(messages, e.Message)
+	}
+	return strings.Join(messages, "; ")
 }
