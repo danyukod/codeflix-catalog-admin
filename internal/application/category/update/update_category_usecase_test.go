@@ -57,4 +57,6 @@ func TestUpdateCategoryUsecase(t *testing.T) {
 
 		gateway.AssertExpectations(t)
 	})
+
+	// Teste Passando a Propriedade Invalida (name)
 }
