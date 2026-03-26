@@ -156,4 +156,28 @@ func TestUpdateCategoryUsecase(t *testing.T) {
 		assert.Nil(t, actualOutput)
 	})
 
+	t.Run("given a valid command when category is not found should return error", func(t *testing.T) {
+		expectedID := category.NewCategory("Film", "", true).GetId()
+
+		var cmd CategoryCommand
+		aCommand := cmd.With(
+			expectedID.GetValue(),
+			"Filmes",
+			"A categoria mais assistida",
+			true,
+		)
+
+		gateway.On("FindById", expectedID).Return(nil, nil).Once()
+
+		actualOutput, err := useCase.Execute(ctx, aCommand)
+
+		assert.Error(t, err)
+		assert.EqualError(t, err, "category with ID "+expectedID.GetValue()+" was not found")
+		assert.Nil(t, actualOutput)
+
+		gateway.AssertCalled(t, "FindById", expectedID)
+		gateway.AssertNotCalled(t, "Update")
+		gateway.AssertExpectations(t)
+	})
+
 }
