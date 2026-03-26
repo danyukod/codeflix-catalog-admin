@@ -2,6 +2,7 @@ package update
 
 import (
 	"context"
+	"errors"
 	"testing"
 
 	"github.com/danyukod/codeflix-catalog-admin/internal/domain/category"
@@ -58,12 +59,41 @@ func TestUpdateCategoryUsecase(t *testing.T) {
 		gateway.AssertExpectations(t)
 	})
 
-	t.Run("given a valid command when calls update category to inactive should return category id", func(t *testing.T) {
+	t.Run("given a valid command when gateway returns a generic error should return error", func(t *testing.T) {
 		aCategory := category.NewCategory("Film", "", true)
 
 		expectedName := "Filmes"
 		expectedDescription := "A categoria mais assistida"
-		expectedIsActive := false
+		expectedIsActive := true
+		expectedID := aCategory.GetId()
+
+		var cmd CategoryCommand
+		aCommand := cmd.With(
+			expectedID.GetValue(),
+			expectedName,
+			expectedDescription,
+			expectedIsActive,
+		)
+
+		expectedErr := errors.New("generic gateway error")
+
+		gateway.On("FindById", expectedID).Return(aCategory, nil).Once()
+		gateway.On("Update", mock.AnythingOfType("*category.Category")).Return(expectedErr).Once()
+
+		actualOutput, err := useCase.Execute(ctx, aCommand)
+
+		assert.Error(t, err)
+		assert.EqualError(t, err, "generic gateway error")
+		assert.Nil(t, actualOutput)
+
+		gateway.AssertExpectations(t)
+	})
+
+	t.Run("given a invalid command when calls update category should return error", func(t *testing.T) {
+		aCategory := category.NewCategory("Film", "", true)
+		expectedName := ""
+		expectedDescription := "A categoria mais assistida"
+		expectedIsActive := true
 		expectedID := aCategory.GetId()
 
 		createdAt := aCategory.GetCreatedAt()
