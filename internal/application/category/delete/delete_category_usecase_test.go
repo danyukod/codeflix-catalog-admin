@@ -29,6 +29,8 @@ func TestDeleteCategoryUsecase(t *testing.T) {
 
 		assert.Nil(t, err)
 
+		gateway.AssertCalled(t, "FindById", expectedID)
+		gateway.AssertCalled(t, "DeleteById", expectedID)
 		gateway.AssertExpectations(t)
 	})
 
@@ -51,6 +53,8 @@ func TestDeleteCategoryUsecase(t *testing.T) {
 		assert.Error(t, err)
 		assert.EqualError(t, err, "generic gateway error")
 
+		gateway.AssertCalled(t, "FindById", expectedID)
+		gateway.AssertCalled(t, "DeleteById", expectedID)
 		gateway.AssertExpectations(t)
 	})
 
