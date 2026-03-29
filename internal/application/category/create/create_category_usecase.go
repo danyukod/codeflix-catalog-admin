@@ -1,0 +1,64 @@
+package create
+
+import (
+	"context"
+	"fmt"
+	"strings"
+
+	"github.com/danyukod/codeflix-catalog-admin/internal/domain/category"
+	"github.com/danyukod/codeflix-catalog-admin/internal/domain/exception/handler"
+)
+
+type CategoryUseCase struct {
+	gateway category.Gateway
+}
+
+func NewCreateCategoryUseCase(gateway category.Gateway) *CategoryUseCase {
+	if gateway == nil {
+		panic("gateway cannot be nil")
+	}
+	return &CategoryUseCase{gateway: gateway}
+}
+
+func (uc *CategoryUseCase) Execute(ctx context.Context, aCommand *CategoryCommand) (*CategoryOutput, error) {
+	if aCommand == nil {
+		return nil, fmt.Errorf("aCommand cannot be nil")
+	}
+
+	aName := aCommand.name
+	aDescription := aCommand.description
+	isActive := aCommand.isActive
+
+	aCategory := category.NewCategory(aName, aDescription, isActive)
+
+	notification := handler.NewNotification()
+	aCategory.Validate(notification)
+	if notification.HasError() {
+		return nil, fmt.Errorf("validation failed: %s", joinValidationMessages(notification))
+	}
+
+	created, err := uc.gateway.Create(aCategory)
+	if err != nil {
+		return nil, err
+	}
+	if created == nil {
+		return nil, fmt.Errorf("gateway returned nil category")
+	}
+
+	var createCategoryOutput CategoryOutput
+	out := createCategoryOutput.From(*created)
+	return out, nil
+}
+
+func joinValidationMessages(n *handler.Notification) string {
+	errs := n.GetErrors()
+	if len(errs) == 0 {
+		return ""
+	}
+
+	messages := make([]string, 0, len(errs))
+	for _, e := range errs {
+		messages = append(messages, e.Message)
+	}
+	return strings.Join(messages, "; ")
+}
