@@ -1,0 +1,39 @@
+server:
+  host: "0.0.0.0"
+  port: 8080
+  shutdown_timeout: 10s
+  request_timeout: 30s
+  compression:
+    enabled: true
+    level: 6
+    mime_types:
+      - "application/json"
+      - "application/xml"
+      - "text/html"
+      - "text/css"
+      - "text/javascript"
+    min_size: 2048
+  undertow:
+    worker_threads: 8
+    io_threads: 2
+
+database:
+  driver: postgres
+  host: localhost
+  port: 5432
+  name: codeflix_catalog
+  user: codeflix
+  password: codeflix
+  ssl_mode: disable
+  max_open_connections: 25
+  max_idle_connections: 5
+  connection_max_lifetime: 5m
+
+logging:
+  level: info
+  format: json
+
+pagination:
+  default_page: 1
+  default_per_page: 20
+  max_per_page: 100
