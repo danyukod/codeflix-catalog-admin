@@ -1,11 +1,16 @@
 package main
 
 import (
+	"context"
 	"fmt"
 	"log"
 	"os"
+	"os/signal"
+	"syscall"
 	"time"
 
+	"github.com/danyukod/codeflix-catalog-admin/internal/infrastructure/category"
+	"github.com/danyukod/codeflix-catalog-admin/internal/infrastructure/database"
 	"gopkg.in/yaml.v3"
 )
 
@@ -94,5 +99,50 @@ func main() {
 		log.Fatalf("failed to load config: %v", err)
 	}
 
+	ctx, cancel := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM)
+	defer cancel()
+
+	// Parse connection max lifetime
+	maxLifetime, err := cfg.Database.ParsedConnectionMaxLifetime()
+	if err != nil {
+		log.Fatalf("failed to parse connection max lifetime: %v", err)
+	}
+
+	// Create database connection
+	dbConfig := database.Config{
+		Host:                  cfg.Database.Host,
+		Port:                  cfg.Database.Port,
+		Name:                  cfg.Database.Name,
+		User:                  cfg.Database.User,
+		Password:              cfg.Database.Password,
+		SSLMode:               cfg.Database.SSLMode,
+		MaxOpenConnections:    cfg.Database.MaxOpenConnections,
+		MaxIdleConnections:    cfg.Database.MaxIdleConnections,
+		ConnectionMaxLifetime: maxLifetime,
+	}
+
+	dbConn, err := database.NewConnection(ctx, dbConfig)
+	if err != nil {
+		log.Fatalf("failed to connect to database: %v", err)
+	}
+	defer dbConn.Close()
+
+	fmt.Println("Successfully connected to database")
+
+	// Run migrations
+	if err := dbConn.RunMigrations(ctx); err != nil {
+		log.Fatalf("failed to run migrations: %v", err)
+	}
+
+	fmt.Println("Migrations executed successfully")
+
+	// Create category repository
+	repo := category.NewRepository(dbConn.Pool())
+	_ = repo // Repository is ready to be injected into use cases
+
 	fmt.Printf("Server listening on %s:%d\n", cfg.Server.Host, cfg.Server.Port)
+
+	// Wait for shutdown signal
+	<-ctx.Done()
+	fmt.Println("Shutting down server...")
 }

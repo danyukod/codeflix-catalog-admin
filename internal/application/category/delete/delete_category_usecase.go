@@ -28,7 +28,7 @@ func (uc *CategoryUseCase) Execute(ctx context.Context, aCommand *CategoryComman
 		return err
 	}
 
-	aCategory, err := uc.gateway.FindById(anId)
+	aCategory, err := uc.gateway.FindById(ctx, anId)
 	if err != nil {
 		return err
 	}
@@ -36,5 +36,5 @@ func (uc *CategoryUseCase) Execute(ctx context.Context, aCommand *CategoryComman
 		return nil
 	}
 
-	return uc.gateway.DeleteById(anId)
+	return uc.gateway.DeleteById(ctx, anId)
 }

@@ -35,8 +35,8 @@ func TestUpdateCategoryUsecase(t *testing.T) {
 			expectedIsActive,
 		)
 
-		gateway.On("FindById", expectedID).Return(aCategory, nil).Once()
-		gateway.On("Update", mock.MatchedBy(func(updatedCategory *category.Category) bool {
+		gateway.On("FindById", mock.Anything, expectedID).Return(aCategory, nil).Once()
+		gateway.On("Update", mock.Anything, mock.MatchedBy(func(updatedCategory *category.Category) bool {
 			if updatedCategory == nil {
 				return false
 			}
@@ -79,8 +79,8 @@ func TestUpdateCategoryUsecase(t *testing.T) {
 
 		expectedErr := errors.New("generic gateway error")
 
-		gateway.On("FindById", expectedID).Return(aCategory, nil).Once()
-		gateway.On("Update", mock.AnythingOfType("*category.Category")).Return(expectedErr).Once()
+		gateway.On("FindById", mock.Anything, expectedID).Return(aCategory, nil).Once()
+		gateway.On("Update", mock.Anything, mock.AnythingOfType("*category.Category")).Return(expectedErr).Once()
 
 		actualOutput, err := useCase.Execute(ctx, aCommand)
 
@@ -108,11 +108,11 @@ func TestUpdateCategoryUsecase(t *testing.T) {
 			expectedIsActive,
 		)
 
-		gateway.On("FindById", expectedID).Return(aCategory, nil).Once()
+		gateway.On("FindById", mock.Anything, expectedID).Return(aCategory, nil).Once()
 
 		actualOutput, err := useCase.Execute(ctx, aCommand)
 
-		gateway.AssertCalled(t, "FindById", expectedID)
+		gateway.AssertCalled(t, "FindById", mock.Anything, expectedID)
 		gateway.AssertNotCalled(t, "Update")
 		assert.EqualError(t, err, "validation failed: 'name' should not be empty")
 		assert.Nil(t, actualOutput)
@@ -132,14 +132,14 @@ func TestUpdateCategoryUsecase(t *testing.T) {
 			true,
 		)
 
-		gateway.On("FindById", expectedID).Return(nil, expectedErr).Once()
+		gateway.On("FindById", mock.Anything, expectedID).Return(nil, expectedErr).Once()
 
 		actualOutput, err := useCase.Execute(ctx, aCommand)
 
 		assert.Error(t, err)
 		assert.EqualError(t, err, "generic gateway error")
 		assert.Nil(t, actualOutput)
-		gateway.AssertCalled(t, "FindById", expectedID)
+		gateway.AssertCalled(t, "FindById", mock.Anything, expectedID)
 		gateway.AssertNotCalled(t, "Update")
 		gateway.AssertExpectations(t)
 	})
@@ -157,7 +157,7 @@ func TestUpdateCategoryUsecase(t *testing.T) {
 			true,
 		)
 
-		gateway.On("FindById", expectedID).Return(nil, nil).Once()
+		gateway.On("FindById", mock.Anything, expectedID).Return(nil, nil).Once()
 
 		actualOutput, err := useCase.Execute(ctx, aCommand)
 
@@ -165,7 +165,7 @@ func TestUpdateCategoryUsecase(t *testing.T) {
 		assert.EqualError(t, err, "category with ID "+expectedID.GetValue()+" was not found")
 		assert.Nil(t, actualOutput)
 
-		gateway.AssertCalled(t, "FindById", expectedID)
+		gateway.AssertCalled(t, "FindById", mock.Anything, expectedID)
 		gateway.AssertNotCalled(t, "Update")
 		gateway.AssertExpectations(t)
 	})

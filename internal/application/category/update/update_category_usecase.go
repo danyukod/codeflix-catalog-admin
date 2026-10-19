@@ -7,17 +7,17 @@ import (
 
 	"github.com/danyukod/codeflix-catalog-admin/internal/domain/category"
 	"github.com/danyukod/codeflix-catalog-admin/internal/domain/exception/handler"
-	"github.com/danyukod/codeflix-catalog-admin/internal/tests/mocks"
 )
 
 type CategoryUseCase struct {
 	gateway category.Gateway
 }
 
-func NewUpdateCategoryUsecase(gateway *mocks.CategoryGatewayMock) *CategoryUseCase {
-	return &CategoryUseCase{
-		gateway: gateway,
+func NewUpdateCategoryUsecase(gateway category.Gateway) *CategoryUseCase {
+	if gateway == nil {
+		panic("gateway cannot be nil")
 	}
+	return &CategoryUseCase{gateway: gateway}
 }
 
 func (uc *CategoryUseCase) Execute(ctx context.Context, aCommand *CategoryCommand) (*CategoryOutput, error) {
@@ -34,7 +34,7 @@ func (uc *CategoryUseCase) Execute(ctx context.Context, aCommand *CategoryComman
 	aDescription := aCommand.description
 	isActive := aCommand.isActive
 
-	aCategory, err := uc.gateway.FindById(anId)
+	aCategory, err := uc.gateway.FindById(ctx, anId)
 	if err != nil {
 		return nil, err
 	}
@@ -51,7 +51,7 @@ func (uc *CategoryUseCase) Execute(ctx context.Context, aCommand *CategoryComman
 		return nil, fmt.Errorf("validation failed: %s", joinValidationMessages(notification))
 	}
 
-	err = uc.gateway.Update(aCategory)
+	err = uc.gateway.Update(ctx, aCategory)
 	if err != nil {
 		return nil, err
 	}

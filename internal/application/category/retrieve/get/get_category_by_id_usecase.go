@@ -28,7 +28,7 @@ func (uc *CategoryUseCase) Execute(ctx context.Context, aCommand *CategoryComman
 		return nil, err
 	}
 
-	aCategory, err := uc.gateway.FindById(anId)
+	aCategory, err := uc.gateway.FindById(ctx, anId)
 	if err != nil {
 		return nil, err
 	}

@@ -9,6 +9,7 @@ import (
 	"github.com/danyukod/codeflix-catalog-admin/internal/domain/pagination"
 	"github.com/danyukod/codeflix-catalog-admin/internal/tests/mocks"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/mock"
 )
 
 func TestListCategoryUseCase(t *testing.T) {
@@ -32,7 +33,7 @@ func TestListCategoryUseCase(t *testing.T) {
 		var cmd CategoryCommand
 		aCommand := cmd.With(1, 10, "", "name", "asc")
 
-		gateway.On("FindAll", aCommand.ToSearchQuery()).Return(expectedPage, nil).Once()
+		gateway.On("FindAll", mock.Anything, aCommand.ToSearchQuery()).Return(expectedPage, nil).Once()
 
 		actualOutput, err := useCase.Execute(ctx, aCommand)
 
@@ -69,7 +70,7 @@ func TestListCategoryUseCase(t *testing.T) {
 		var cmd CategoryCommand
 		aCommand := cmd.With(1, 10, "", "name", "asc")
 
-		gateway.On("FindAll", aCommand.ToSearchQuery()).Return(nil, expectedErr).Once()
+		gateway.On("FindAll", mock.Anything, aCommand.ToSearchQuery()).Return(nil, expectedErr).Once()
 
 		actualOutput, err := useCase.Execute(ctx, aCommand)
 
