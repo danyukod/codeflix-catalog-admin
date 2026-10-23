@@ -127,6 +127,23 @@ func TestRepository_FindById(t *testing.T) {
 		assert.Contains(t, err.Error(), "category not found")
 	})
 
+	t.Run("given category with null description when finding should return empty description", func(t *testing.T) {
+		db := setupTestDB(t)
+		repo := NewRepository(db)
+		cat := createTestCategory(t, "Without Description", "")
+
+		_, err := db.Exec(`
+			INSERT INTO categories (id, name, description, active, created_at, updated_at)
+			VALUES (?, ?, NULL, ?, ?, ?)
+		`, cat.GetId().GetValue(), cat.GetName(), cat.IsActive(), cat.GetCreatedAt(), cat.GetUpdatedAt())
+		require.NoError(t, err)
+
+		result, err := repo.FindById(context.Background(), cat.GetId().(category.Id))
+
+		require.NoError(t, err)
+		assert.Empty(t, result.GetDescription())
+	})
+
 	t.Run("given soft-deleted category when finding should still return it", func(t *testing.T) {
 		db := setupTestDB(t)
 		repo := NewRepository(db)
@@ -264,6 +281,24 @@ func TestRepository_FindAll(t *testing.T) {
 		assert.Empty(t, result.Items)
 		assert.Equal(t, 1, result.CurrentPage)
 		assert.Equal(t, 10, result.PerPage)
+	})
+
+	t.Run("given category with null description when finding all should return empty description", func(t *testing.T) {
+		db := setupTestDB(t)
+		repo := NewRepository(db)
+		cat := createTestCategory(t, "Without Description", "")
+
+		_, err := db.Exec(`
+			INSERT INTO categories (id, name, description, active, created_at, updated_at)
+			VALUES (?, ?, NULL, ?, ?, ?)
+		`, cat.GetId().GetValue(), cat.GetName(), cat.IsActive(), cat.GetCreatedAt(), cat.GetUpdatedAt())
+		require.NoError(t, err)
+
+		result, err := repo.FindAll(context.Background(), pagination.NewSearchQuery(1, 10, "", "name", "ASC"))
+
+		require.NoError(t, err)
+		require.Len(t, result.Items, 1)
+		assert.Empty(t, result.Items[0].GetDescription())
 	})
 
 	t.Run("given multiple categories when finding all should return paginated results", func(t *testing.T) {

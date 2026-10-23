@@ -66,7 +66,10 @@ func (r *Repository) DeleteById(ctx context.Context, id category.Id) error {
 		return fmt.Errorf("delete category: %w", err)
 	}
 
-	rowsAffected, _ := result.RowsAffected()
+	rowsAffected, err := result.RowsAffected()
+	if err != nil {
+		return fmt.Errorf("delete category: get affected rows: %w", err)
+	}
 	if rowsAffected == 0 {
 		return errors.New("category not found")
 	}
@@ -82,7 +85,8 @@ func (r *Repository) FindById(ctx context.Context, id category.Id) (*category.Ca
 		WHERE id = ?
 	`
 
-	var name, description string
+	var name string
+	var description sql.NullString
 	var active bool
 	var createdAt, updatedAt time.Time
 	var deletedAt *time.Time
@@ -103,7 +107,7 @@ func (r *Repository) FindById(ctx context.Context, id category.Id) (*category.Ca
 		return nil, fmt.Errorf("invalid category id: %w", err)
 	}
 
-	return mapToCategory(catID, name, description, active, createdAt, updatedAt, deletedAt)
+	return mapToCategory(catID, name, nullableStringValue(description), active, createdAt, updatedAt, deletedAt)
 }
 
 // Update modifies an existing category.
@@ -128,7 +132,10 @@ func (r *Repository) Update(ctx context.Context, cat *category.Category) error {
 		return fmt.Errorf("update category: %w", err)
 	}
 
-	rowsAffected, _ := result.RowsAffected()
+	rowsAffected, err := result.RowsAffected()
+	if err != nil {
+		return fmt.Errorf("update category: get affected rows: %w", err)
+	}
 	if rowsAffected == 0 {
 		return errors.New("category not found")
 	}
@@ -180,7 +187,8 @@ func (r *Repository) FindAll(ctx context.Context, query pagination.SearchQuery) 
 
 	var items []category.Category
 	for rows.Next() {
-		var name, description string
+		var name string
+		var description sql.NullString
 		var active bool
 		var createdAt, updatedAt time.Time
 		var deletedAt *time.Time
@@ -195,7 +203,7 @@ func (r *Repository) FindAll(ctx context.Context, query pagination.SearchQuery) 
 			return pagination.Pagination[category.Category]{}, fmt.Errorf("invalid category id: %w", err)
 		}
 
-		cat, err := mapToCategory(catID, name, description, active, createdAt, updatedAt, deletedAt)
+		cat, err := mapToCategory(catID, name, nullableStringValue(description), active, createdAt, updatedAt, deletedAt)
 		if err != nil {
 			return pagination.Pagination[category.Category]{}, err
 		}
@@ -271,6 +279,13 @@ func (r *Repository) ExistsByIDs(ctx context.Context, ids []category.Id) ([]cate
 func mapToCategory(id category.Id, name, description string, active bool, createdAt, updatedAt time.Time, deletedAt *time.Time) (*category.Category, error) {
 	cat := category.FromDB(id, name, description, active, createdAt, updatedAt, deletedAt)
 	return cat, nil
+}
+
+func nullableStringValue(value sql.NullString) string {
+	if !value.Valid {
+		return ""
+	}
+	return value.String
 }
 
 // sanitizeSortColumn ensures the sort column is valid.
