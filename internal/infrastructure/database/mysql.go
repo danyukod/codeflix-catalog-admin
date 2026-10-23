@@ -2,19 +2,22 @@ package database
 
 import (
 	"context"
+	"database/sql"
 	"embed"
+	"errors"
 	"fmt"
 	"sort"
 	"strings"
 	"time"
 
-	"github.com/jackc/pgx/v5/pgxpool"
+	"github.com/go-sql-driver/mysql"
+	_ "github.com/go-sql-driver/mysql"
 )
 
 //go:embed migrations/*.sql
 var migrationsFS embed.FS
 
-// Config holds the PostgreSQL connection configuration.
+// Config holds the MySQL connection configuration.
 type Config struct {
 	Host                  string
 	Port                  int
@@ -27,54 +30,53 @@ type Config struct {
 	ConnectionMaxLifetime time.Duration
 }
 
-// Connection wraps a pgxpool.Pool and provides database operations.
+// Connection wraps a sql.DB and provides database operations.
 type Connection struct {
-	pool *pgxpool.Pool
+	db *sql.DB
 }
 
-// NewConnection creates a new PostgreSQL connection pool and verifies it.
+// NewConnection creates a new MySQL connection pool and verifies it.
 func NewConnection(ctx context.Context, cfg Config) (*Connection, error) {
+	tlsConfig := cfg.SSLMode
+	if tlsConfig == "disable" || tlsConfig == "" {
+		tlsConfig = "false"
+	}
 	dsn := fmt.Sprintf(
-		"postgres://%s:%s@%s:%d/%s?sslmode=%s",
+		"%s:%s@tcp(%s:%d)/%s?tls=%s",
 		cfg.User,
 		cfg.Password,
 		cfg.Host,
 		cfg.Port,
 		cfg.Name,
-		cfg.SSLMode,
+		tlsConfig,
 	)
 
-	poolConfig, err := pgxpool.ParseConfig(dsn)
+	db, err := sql.Open("mysql", dsn)
 	if err != nil {
-		return nil, fmt.Errorf("parse postgres dsn: %w", err)
+		return nil, fmt.Errorf("open mysql connection: %w", err)
 	}
 
-	poolConfig.MaxConns = int32(cfg.MaxOpenConnections)
-	poolConfig.MinConns = int32(cfg.MaxIdleConnections)
-	poolConfig.MaxConnLifetime = cfg.ConnectionMaxLifetime
-
-	pool, err := pgxpool.NewWithConfig(ctx, poolConfig)
-	if err != nil {
-		return nil, fmt.Errorf("create postgres pool: %w", err)
-	}
+	db.SetMaxOpenConns(cfg.MaxOpenConnections)
+	db.SetMaxIdleConns(cfg.MaxIdleConnections)
+	db.SetConnMaxLifetime(cfg.ConnectionMaxLifetime)
 
 	// Verify the connection is working
-	if err := pool.Ping(ctx); err != nil {
-		return nil, fmt.Errorf("ping postgres: %w", err)
+	if err := db.PingContext(ctx); err != nil {
+		return nil, fmt.Errorf("ping mysql: %w", err)
 	}
 
-	return &Connection{pool: pool}, nil
+	return &Connection{db: db}, nil
 }
 
-// Pool returns the underlying pgxpool.Pool for query execution.
-func (c *Connection) Pool() *pgxpool.Pool {
-	return c.pool
+// Pool returns the underlying sql.DB for query execution.
+func (c *Connection) Pool() *sql.DB {
+	return c.db
 }
 
 // Close closes the connection pool.
 func (c *Connection) Close() {
-	if c.pool != nil {
-		c.pool.Close()
+	if c.db != nil {
+		c.db.Close()
 	}
 }
 
@@ -124,7 +126,12 @@ func (c *Connection) RunMigrations(ctx context.Context) error {
 				continue
 			}
 
-			if _, err := c.pool.Exec(ctx, stmt); err != nil {
+			if _, err := c.db.ExecContext(ctx, stmt); err != nil {
+				// Ignore duplicate key errors (e.g., rerunning CREATE INDEX on existing indexes)
+				var mysqlErr *mysql.MySQLError
+				if errors.As(err, &mysqlErr) && mysqlErr.Number == 1061 {
+					continue
+				}
 				return fmt.Errorf("execute migration %s: %w", m.name, err)
 			}
 		}

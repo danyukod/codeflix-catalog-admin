@@ -2,6 +2,7 @@ package category
 
 import (
 	"context"
+	"database/sql"
 	"errors"
 	"fmt"
 	"strings"
@@ -9,26 +10,23 @@ import (
 
 	"github.com/danyukod/codeflix-catalog-admin/internal/domain/category"
 	"github.com/danyukod/codeflix-catalog-admin/internal/domain/pagination"
-	"github.com/jackc/pgx/v5"
-	"github.com/jackc/pgx/v5/pgxpool"
 )
 
-// Repository implements the category.Gateway interface using PostgreSQL.
+// Repository implements the category.Gateway interface using MySQL.
 type Repository struct {
-	pool *pgxpool.Pool
+	db *sql.DB
 }
 
 // NewRepository creates a new category repository.
-func NewRepository(pool *pgxpool.Pool) *Repository {
-	return &Repository{pool: pool}
+func NewRepository(db *sql.DB) *Repository {
+	return &Repository{db: db}
 }
 
 // Create inserts a new category into the database.
 func (r *Repository) Create(ctx context.Context, cat *category.Category) (*category.Category, error) {
 	query := `
 		INSERT INTO categories (id, name, description, active, created_at, updated_at, deleted_at)
-		VALUES ($1, $2, $3, $4, $5, $6, $7)
-		RETURNING id, name, description, active, created_at, updated_at, deleted_at
+		VALUES (?, ?, ?, ?, ?, ?, ?)
 	`
 
 	var deletedAt *time.Time
@@ -37,11 +35,7 @@ func (r *Repository) Create(ctx context.Context, cat *category.Category) (*categ
 		deletedAt = &t
 	}
 
-	var name, description string
-	var active bool
-	var createdAt, updatedAt time.Time
-
-	err := r.pool.QueryRow(ctx, query,
+	_, err := r.db.ExecContext(ctx, query,
 		cat.GetId().GetValue(),
 		cat.GetName(),
 		cat.GetDescription(),
@@ -49,7 +43,7 @@ func (r *Repository) Create(ctx context.Context, cat *category.Category) (*categ
 		cat.GetCreatedAt(),
 		cat.GetUpdatedAt(),
 		deletedAt,
-	).Scan(&name, &description, &active, &createdAt, &updatedAt, &deletedAt)
+	)
 
 	if err != nil {
 		return nil, fmt.Errorf("create category: %w", err)
@@ -62,16 +56,17 @@ func (r *Repository) Create(ctx context.Context, cat *category.Category) (*categ
 func (r *Repository) DeleteById(ctx context.Context, id category.Id) error {
 	query := `
 		UPDATE categories
-		SET active = false, updated_at = $1, deleted_at = $1
-		WHERE id = $2 AND deleted_at IS NULL
+		SET active = false, updated_at = ?, deleted_at = ?
+		WHERE id = ? AND deleted_at IS NULL
 	`
 
-	result, err := r.pool.Exec(ctx, query, time.Now().UTC(), id.GetValue())
+	now := time.Now().UTC()
+	result, err := r.db.ExecContext(ctx, query, now, now, id.GetValue())
 	if err != nil {
 		return fmt.Errorf("delete category: %w", err)
 	}
 
-	rowsAffected := result.RowsAffected()
+	rowsAffected, _ := result.RowsAffected()
 	if rowsAffected == 0 {
 		return errors.New("category not found")
 	}
@@ -84,7 +79,7 @@ func (r *Repository) FindById(ctx context.Context, id category.Id) (*category.Ca
 	query := `
 		SELECT id, name, description, active, created_at, updated_at, deleted_at
 		FROM categories
-		WHERE id = $1
+		WHERE id = ?
 	`
 
 	var name, description string
@@ -93,11 +88,11 @@ func (r *Repository) FindById(ctx context.Context, id category.Id) (*category.Ca
 	var deletedAt *time.Time
 	var dbID string
 
-	err := r.pool.QueryRow(ctx, query, id.GetValue()).
+	err := r.db.QueryRowContext(ctx, query, id.GetValue()).
 		Scan(&dbID, &name, &description, &active, &createdAt, &updatedAt, &deletedAt)
 
 	if err != nil {
-		if errors.Is(err, pgx.ErrNoRows) {
+		if errors.Is(err, sql.ErrNoRows) {
 			return nil, errors.New("category not found")
 		}
 		return nil, fmt.Errorf("find category by id: %w", err)
@@ -115,13 +110,13 @@ func (r *Repository) FindById(ctx context.Context, id category.Id) (*category.Ca
 func (r *Repository) Update(ctx context.Context, cat *category.Category) error {
 	query := `
 		UPDATE categories
-		SET name = $1, description = $2, active = $3, updated_at = $4, deleted_at = $5
-		WHERE id = $6
+		SET name = ?, description = ?, active = ?, updated_at = ?, deleted_at = ?
+		WHERE id = ?
 	`
 
 	deletedAt := cat.GetDeletedAt()
 
-	result, err := r.pool.Exec(ctx, query,
+	result, err := r.db.ExecContext(ctx, query,
 		cat.GetName(),
 		cat.GetDescription(),
 		cat.IsActive(),
@@ -133,7 +128,7 @@ func (r *Repository) Update(ctx context.Context, cat *category.Category) error {
 		return fmt.Errorf("update category: %w", err)
 	}
 
-	rowsAffected := result.RowsAffected()
+	rowsAffected, _ := result.RowsAffected()
 	if rowsAffected == 0 {
 		return errors.New("category not found")
 	}
@@ -146,12 +141,10 @@ func (r *Repository) FindAll(ctx context.Context, query pagination.SearchQuery) 
 	// Build the WHERE clause
 	whereClauses := []string{"deleted_at IS NULL"}
 	args := []interface{}{}
-	argCount := 0
 
 	if query.Terms != "" {
-		argCount++
 		args = append(args, fmt.Sprintf("%%%s%%", query.Terms))
-		whereClauses = append(whereClauses, fmt.Sprintf("(name ILIKE $%d OR description ILIKE $%d)", argCount, argCount))
+		whereClauses = append(whereClauses, "(name LIKE ? OR description LIKE ?)")
 	}
 
 	whereSQL := ""
@@ -166,21 +159,19 @@ func (r *Repository) FindAll(ctx context.Context, query pagination.SearchQuery) 
 	// Count total
 	countQuery := fmt.Sprintf("SELECT COUNT(*) FROM categories %s", whereSQL)
 	var total int64
-	if err := r.pool.QueryRow(ctx, countQuery, args...).Scan(&total); err != nil {
+	if err := r.db.QueryRowContext(ctx, countQuery, args...).Scan(&total); err != nil {
 		return pagination.Pagination[category.Category]{}, fmt.Errorf("count categories: %w", err)
 	}
 
 	// Fetch page
 	offset := (query.Page - 1) * query.PerPage
 	dataQuery := fmt.Sprintf(
-		"SELECT id, name, description, active, created_at, updated_at, deleted_at FROM categories %s ORDER BY %s %s LIMIT $%d OFFSET $%d",
+		"SELECT id, name, description, active, created_at, updated_at, deleted_at FROM categories %s ORDER BY %s %s LIMIT ? OFFSET ?",
 		whereSQL, sortColumn, direction,
-		len(args)+1,
-		len(args)+2,
 	)
 	args = append(args, query.PerPage, offset)
 
-	rows, err := r.pool.Query(ctx, dataQuery, args...)
+	rows, err := r.db.QueryContext(ctx, dataQuery, args...)
 	if err != nil {
 		return pagination.Pagination[category.Category]{}, fmt.Errorf("find all categories: %w", err)
 	}
@@ -236,7 +227,7 @@ func (r *Repository) ExistsByIDs(ctx context.Context, ids []category.Id) ([]cate
 	placeholders := make([]string, len(ids))
 	args := make([]interface{}, len(ids))
 	for i, id := range ids {
-		placeholders[i] = fmt.Sprintf("$%d", i+1)
+		placeholders[i] = "?"
 		args[i] = id.GetValue()
 	}
 
@@ -245,7 +236,7 @@ func (r *Repository) ExistsByIDs(ctx context.Context, ids []category.Id) ([]cate
 		strings.Join(placeholders, ", "),
 	)
 
-	rows, err := r.pool.Query(ctx, query, args...)
+	rows, err := r.db.QueryContext(ctx, query, args...)
 	if err != nil {
 		return nil, fmt.Errorf("exists by ids: %w", err)
 	}

@@ -1,2 +1,19 @@
 services:
-  
+  mysql:
+    image: mysql:latest
+    container_name: shop-mysql
+    environment:
+      MYSQL_DATABASE: shop
+      MYSQL_USER: shop
+      MYSQL_PASSWORD: shop
+      MYSQL_ROOT_PASSWORD: root
+    security_opt:
+      - seccomp:unconfined
+    ports:
+      - "3306:3306"
+    networks:
+      - shop-network
+
+networks:
+    shop-network:
+        driver: bridge
