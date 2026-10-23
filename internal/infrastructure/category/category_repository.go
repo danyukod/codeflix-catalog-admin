@@ -143,7 +143,8 @@ func (r *Repository) FindAll(ctx context.Context, query pagination.SearchQuery) 
 	args := []interface{}{}
 
 	if query.Terms != "" {
-		args = append(args, fmt.Sprintf("%%%s%%", query.Terms))
+		searchTerm := fmt.Sprintf("%%%s%%", query.Terms)
+		args = append(args, searchTerm, searchTerm)
 		whereClauses = append(whereClauses, "(name LIKE ? OR description LIKE ?)")
 	}
 

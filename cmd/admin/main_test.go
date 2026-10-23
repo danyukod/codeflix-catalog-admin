@@ -22,7 +22,7 @@ func TestMainFunction(t *testing.T) {
 		t.Errorf("expected port 8080, got %d", cfg.Server.Port)
 	}
 
-	if cfg.Database.Name != "codeflix_catalog" {
-		t.Errorf("expected database codeflix_catalog, got %s", cfg.Database.Name)
+	if cfg.Database.Name != "shop" {
+		t.Errorf("expected database shop, got %s", cfg.Database.Name)
 	}
 }
