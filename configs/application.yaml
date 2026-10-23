@@ -18,12 +18,12 @@ server:
     io_threads: 2
 
 database:
-  driver: postgres
+  driver: mysql
   host: localhost
-  port: 5432
-  name: codeflix_catalog
-  user: codeflix
-  password: codeflix
+  port: 3306
+  name: shop
+  user: shop
+  password: shop
   ssl_mode: disable
   max_open_connections: 25
   max_idle_connections: 5
