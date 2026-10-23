@@ -24,7 +24,7 @@ func (uc *CategoryUseCase) Execute(ctx context.Context, aCommand *CategoryComman
 		return pagination.Pagination[CategoryOutput]{}, fmt.Errorf("aCommand cannot be nil")
 	}
 
-	result, err := uc.gateway.FindAll(aCommand.ToSearchQuery())
+	result, err := uc.gateway.FindAll(ctx, aCommand.ToSearchQuery())
 	if err != nil {
 		return pagination.Pagination[CategoryOutput]{}, err
 	}

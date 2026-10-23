@@ -44,7 +44,7 @@ func TestCreateCategoryUseCase(t *testing.T) {
 		aCommand := cmd.With(expectedName, expectedDescription, true)
 
 		gateway.
-			On("Create", mock.MatchedBy(matchesCreatedCategory(expectedName, expectedDescription, true))).
+			On("Create", mock.Anything, mock.MatchedBy(matchesCreatedCategory(expectedName, expectedDescription, true))).
 			Return(expectedCategory, nil).
 			Once()
 
@@ -82,7 +82,7 @@ func TestCreateCategoryUseCase(t *testing.T) {
 		aCommand := cmd.With(expectedName, expectedDescription, false)
 
 		gateway.
-			On("Create", mock.MatchedBy(matchesCreatedCategory(expectedName, expectedDescription, false))).
+			On("Create", mock.Anything, mock.MatchedBy(matchesCreatedCategory(expectedName, expectedDescription, false))).
 			Return(expectedCategory, nil).
 			Once()
 
@@ -104,7 +104,7 @@ func TestCreateCategoryUseCase(t *testing.T) {
 		aCommand := cmd.With(expectedName, expectedDescription, true)
 
 		gateway.
-			On("Create", mock.MatchedBy(matchesCreatedCategory(expectedName, expectedDescription, true))).
+			On("Create", mock.Anything, mock.MatchedBy(matchesCreatedCategory(expectedName, expectedDescription, true))).
 			Return(nil, errors.New(expectedError)).
 			Once()
 

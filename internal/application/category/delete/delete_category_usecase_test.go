@@ -8,6 +8,7 @@ import (
 	"github.com/danyukod/codeflix-catalog-admin/internal/domain/category"
 	"github.com/danyukod/codeflix-catalog-admin/internal/tests/mocks"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/mock"
 )
 
 func TestDeleteCategoryUsecase(t *testing.T) {
@@ -22,15 +23,15 @@ func TestDeleteCategoryUsecase(t *testing.T) {
 		var cmd CategoryCommand
 		aCommand := cmd.With(expectedID.GetValue())
 
-		gateway.On("FindById", expectedID).Return(aCategory, nil).Once()
-		gateway.On("DeleteById", expectedID).Return(nil).Once()
+		gateway.On("FindById", mock.Anything, expectedID).Return(aCategory, nil).Once()
+		gateway.On("DeleteById", mock.Anything, expectedID).Return(nil).Once()
 
 		err := useCase.Execute(ctx, aCommand)
 
 		assert.Nil(t, err)
 
-		gateway.AssertCalled(t, "FindById", expectedID)
-		gateway.AssertCalled(t, "DeleteById", expectedID)
+		gateway.AssertCalled(t, "FindById", mock.Anything, expectedID)
+		gateway.AssertCalled(t, "DeleteById", mock.Anything, expectedID)
 		gateway.AssertExpectations(t)
 	})
 
@@ -45,16 +46,16 @@ func TestDeleteCategoryUsecase(t *testing.T) {
 
 		expectedErr := errors.New("generic gateway error")
 
-		gateway.On("FindById", expectedID).Return(aCategory, nil).Once()
-		gateway.On("DeleteById", expectedID).Return(expectedErr).Once()
+		gateway.On("FindById", mock.Anything, expectedID).Return(aCategory, nil).Once()
+		gateway.On("DeleteById", mock.Anything, expectedID).Return(expectedErr).Once()
 
 		err := useCase.Execute(ctx, aCommand)
 
 		assert.Error(t, err)
 		assert.EqualError(t, err, "generic gateway error")
 
-		gateway.AssertCalled(t, "FindById", expectedID)
-		gateway.AssertCalled(t, "DeleteById", expectedID)
+		gateway.AssertCalled(t, "FindById", mock.Anything, expectedID)
+		gateway.AssertCalled(t, "DeleteById", mock.Anything, expectedID)
 		gateway.AssertExpectations(t)
 	})
 
@@ -67,13 +68,13 @@ func TestDeleteCategoryUsecase(t *testing.T) {
 		var cmd CategoryCommand
 		aCommand := cmd.With(expectedID.GetValue())
 
-		gateway.On("FindById", expectedID).Return(nil, expectedErr).Once()
+		gateway.On("FindById", mock.Anything, expectedID).Return(nil, expectedErr).Once()
 
 		err := useCase.Execute(ctx, aCommand)
 
 		assert.Error(t, err)
 		assert.EqualError(t, err, "generic gateway error")
-		gateway.AssertCalled(t, "FindById", expectedID)
+		gateway.AssertCalled(t, "FindById", mock.Anything, expectedID)
 		gateway.AssertNotCalled(t, "DeleteById")
 		gateway.AssertExpectations(t)
 	})
@@ -86,12 +87,12 @@ func TestDeleteCategoryUsecase(t *testing.T) {
 		var cmd CategoryCommand
 		aCommand := cmd.With(expectedID.GetValue())
 
-		gateway.On("FindById", expectedID).Return(nil, nil).Once()
+		gateway.On("FindById", mock.Anything, expectedID).Return(nil, nil).Once()
 
 		err := useCase.Execute(ctx, aCommand)
 
 		assert.Nil(t, err)
-		gateway.AssertCalled(t, "FindById", expectedID)
+		gateway.AssertCalled(t, "FindById", mock.Anything, expectedID)
 		gateway.AssertNotCalled(t, "DeleteById")
 		gateway.AssertExpectations(t)
 	})

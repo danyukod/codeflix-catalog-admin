@@ -37,7 +37,7 @@ func (uc *CategoryUseCase) Execute(ctx context.Context, aCommand *CategoryComman
 		return nil, fmt.Errorf("validation failed: %s", joinValidationMessages(notification))
 	}
 
-	created, err := uc.gateway.Create(aCategory)
+	created, err := uc.gateway.Create(ctx, aCategory)
 	if err != nil {
 		return nil, err
 	}

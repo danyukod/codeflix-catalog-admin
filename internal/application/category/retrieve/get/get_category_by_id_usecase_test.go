@@ -8,6 +8,7 @@ import (
 	"github.com/danyukod/codeflix-catalog-admin/internal/domain/category"
 	"github.com/danyukod/codeflix-catalog-admin/internal/tests/mocks"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/mock"
 )
 
 func TestGetCategoryByIdUsecase(t *testing.T) {
@@ -28,7 +29,7 @@ func TestGetCategoryByIdUsecase(t *testing.T) {
 		var cmd CategoryCommand
 		aCommand := cmd.With(expectedID.GetValue())
 
-		gateway.On("FindById", expectedID).Return(aCategory, nil).Once()
+		gateway.On("FindById", mock.Anything, expectedID).Return(aCategory, nil).Once()
 
 		actualOutput, err := useCase.Execute(ctx, aCommand)
 
@@ -54,7 +55,7 @@ func TestGetCategoryByIdUsecase(t *testing.T) {
 		var cmd CategoryCommand
 		aCommand := cmd.With(expectedID.GetValue())
 
-		gateway.On("FindById", expectedID).Return(nil, expectedErr).Once()
+		gateway.On("FindById", mock.Anything, expectedID).Return(nil, expectedErr).Once()
 
 		actualOutput, err := useCase.Execute(ctx, aCommand)
 
@@ -100,7 +101,7 @@ func TestGetCategoryByIdUsecase(t *testing.T) {
 		var cmd CategoryCommand
 		aCommand := cmd.With(expectedID.GetValue())
 
-		gateway.On("FindById", expectedID).Return(nil, nil).Once()
+		gateway.On("FindById", mock.Anything, expectedID).Return(nil, nil).Once()
 
 		actualOutput, err := useCase.Execute(ctx, aCommand)
 

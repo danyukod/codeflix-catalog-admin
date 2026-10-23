@@ -71,3 +71,16 @@ func (c *Category) IsActive() bool               { return c.active }
 func (c *Category) GetCreatedAt() time.Time      { return c.createdAt }
 func (c *Category) GetUpdatedAt() time.Time      { return c.updatedAt }
 func (c *Category) GetDeletedAt() *time.Time     { return c.deletedAt }
+
+// FromDB creates a Category from database values, preserving the original ID and timestamps.
+func FromDB(id Id, name, description string, active bool, createdAt, updatedAt time.Time, deletedAt *time.Time) *Category {
+	return &Category{
+		id:          id,
+		name:        name,
+		description: description,
+		active:      active,
+		createdAt:   createdAt,
+		updatedAt:   updatedAt,
+		deletedAt:   deletedAt,
+	}
+}
