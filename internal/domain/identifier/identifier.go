@@ -1,5 +1,5 @@
 package identifier
 
 type Identifier interface {
-	GetIdentifier() string
+	GetValue() string
 }

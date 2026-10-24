@@ -10,7 +10,7 @@ type Id struct {
 	id string
 }
 
-func (i Id) GetIdentifier() string {
+func (i Id) GetValue() string {
 	return i.id
 }
 
