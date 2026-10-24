@@ -73,7 +73,15 @@ func (c *Category) GetUpdatedAt() time.Time      { return c.updatedAt }
 func (c *Category) GetDeletedAt() *time.Time     { return c.deletedAt }
 
 // FromDB creates a Category from database values, preserving the original ID and timestamps.
-func FromDB(id Id, name, description string, active bool, createdAt, updatedAt time.Time, deletedAt *time.Time) *Category {
+func FromDB(
+	id identifier.Identifier,
+	name,
+	description string,
+	active bool,
+	createdAt,
+	updatedAt time.Time,
+	deletedAt *time.Time,
+) *Category {
 	return &Category{
 		id:          id,
 		name:        name,
