@@ -10,7 +10,7 @@ type CategoryCommand struct {
 	direction string
 }
 
-func (c CategoryCommand) With(page, perPage int, terms, sort, direction string) *CategoryCommand {
+func (c *CategoryCommand) With(page, perPage int, terms, sort, direction string) *CategoryCommand {
 	return &CategoryCommand{page, perPage, terms, sort, direction}
 }
 

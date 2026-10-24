@@ -22,10 +22,10 @@ type Config struct {
 }
 
 type ServerConfig struct {
-	Host            string          `yaml:"host"`
-	Port            int             `yaml:"port"`
-	ShutdownTimeout string          `yaml:"shutdown_timeout"`
-	RequestTimeout  string          `yaml:"request_timeout"`
+	Host            string            `yaml:"host"`
+	Port            int               `yaml:"port"`
+	ShutdownTimeout string            `yaml:"shutdown_timeout"`
+	RequestTimeout  string            `yaml:"request_timeout"`
 	Compression     CompressionConfig `yaml:"compression"`
 	Undertow        UndertowConfig    `yaml:"undertow"`
 }
@@ -83,7 +83,12 @@ func loadConfig(path string) (*Config, error) {
 	if err != nil {
 		return nil, fmt.Errorf("open config file: %w", err)
 	}
-	defer f.Close()
+	defer func(f *os.File) {
+		err := f.Close()
+		if err != nil {
+			log.Printf("failed to close config file: %v", err)
+		}
+	}(f)
 
 	var cfg Config
 	if err := yaml.NewDecoder(f).Decode(&cfg); err != nil {

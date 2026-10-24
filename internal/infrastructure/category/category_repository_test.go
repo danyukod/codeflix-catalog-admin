@@ -34,7 +34,10 @@ func setupTestDB(t *testing.T) *sql.DB {
 	require.NoError(t, err)
 
 	t.Cleanup(func() {
-		db.Close()
+		err := db.Close()
+		if err != nil {
+			return
+		}
 	})
 
 	return db

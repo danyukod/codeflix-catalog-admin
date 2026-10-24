@@ -8,13 +8,9 @@ func NewError(message string) Error {
 	return Error{Message: message}
 }
 
-type ValidationHandler interface {
-	Append(err Error) ValidationHandler
-	AppendHandler(handler ValidationHandler) ValidationHandler
+type Handler interface {
+	Append(err Error) Handler
+	AppendHandler(handler Handler) Handler
 	GetErrors() []Error
 	HasError() bool
-}
-
-func HasError(h ValidationHandler) bool {
-	return len(h.GetErrors()) > 0
 }

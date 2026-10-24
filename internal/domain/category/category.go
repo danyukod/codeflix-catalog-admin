@@ -36,7 +36,7 @@ func NewCategory(aName string, aDescription string, isActive bool) *Category {
 	}
 }
 
-func (c *Category) Validate(handler validation.ValidationHandler) {
+func (c *Category) Validate(handler validation.Handler) {
 	NewCategoryValidator(c, handler).Validate()
 }
 

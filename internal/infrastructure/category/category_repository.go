@@ -147,7 +147,7 @@ func (r *Repository) Update(ctx context.Context, cat *category.Category) error {
 func (r *Repository) FindAll(ctx context.Context, query pagination.SearchQuery) (pagination.Pagination[category.Category], error) {
 	// Build the WHERE clause
 	whereClauses := []string{"deleted_at IS NULL"}
-	args := []interface{}{}
+	var args []any
 
 	if query.Terms != "" {
 		searchTerm := fmt.Sprintf("%%%s%%", query.Terms)
@@ -183,7 +183,12 @@ func (r *Repository) FindAll(ctx context.Context, query pagination.SearchQuery) 
 	if err != nil {
 		return pagination.Pagination[category.Category]{}, fmt.Errorf("find all categories: %w", err)
 	}
-	defer rows.Close()
+	defer func(rows *sql.Rows) {
+		err := rows.Close()
+		if err != nil {
+			fmt.Printf("failed to close rows: %v\n", err)
+		}
+	}(rows)
 
 	var items []category.Category
 	for rows.Next() {
@@ -249,7 +254,12 @@ func (r *Repository) ExistsByIDs(ctx context.Context, ids []category.Id) ([]cate
 	if err != nil {
 		return nil, fmt.Errorf("exists by ids: %w", err)
 	}
-	defer rows.Close()
+	defer func(rows *sql.Rows) {
+		err := rows.Close()
+		if err != nil {
+			fmt.Printf("failed to close rows: %v\n", err)
+		}
+	}(rows)
 
 	var found []category.Id
 	for rows.Next() {

@@ -26,10 +26,6 @@ func FromString(id string) (Id, error) {
 	return categoryID, nil
 }
 
-func FromUUID(uuid uuid.UUID) Id {
-	return Id{uuid.String()}
-}
-
 func (i Id) Validate() error {
 	if i.id == "" {
 		return errors.New("id cannot be empty")
