@@ -3,13 +3,28 @@ package http
 import (
 	stdhttp "net/http"
 
+	"github.com/danyukod/codeflix-catalog-admin/docs"
 	categorycontroller "github.com/danyukod/codeflix-catalog-admin/internal/interfaces/http/controller/category"
-	"github.com/swaggo/http-swagger"
 )
 
 func NewRouter(controller *categorycontroller.Controller) stdhttp.Handler {
 	mux := stdhttp.NewServeMux()
-	mux.Handle("/swagger/", httpSwagger.Handler(httpSwagger.URL("/swagger/doc.json")))
+	mux.HandleFunc("/docs", func(w stdhttp.ResponseWriter, r *stdhttp.Request) {
+		if r.Method != stdhttp.MethodGet {
+			w.WriteHeader(stdhttp.StatusMethodNotAllowed)
+			return
+		}
+		w.Header().Set("Content-Type", "text/html; charset=utf-8")
+		_, _ = w.Write(docs.SwaggerUIHTML)
+	})
+	mux.HandleFunc("/openapi.yaml", func(w stdhttp.ResponseWriter, r *stdhttp.Request) {
+		if r.Method != stdhttp.MethodGet {
+			w.WriteHeader(stdhttp.StatusMethodNotAllowed)
+			return
+		}
+		w.Header().Set("Content-Type", "application/yaml; charset=utf-8")
+		_, _ = w.Write(docs.OpenAPIYAML)
+	})
 	mux.HandleFunc("/categories", func(w stdhttp.ResponseWriter, r *stdhttp.Request) {
 		if r.URL.Path != "/categories" {
 			stdhttp.NotFound(w, r)

@@ -33,15 +33,6 @@ func NewController(
 	return &Controller{create: create, list: list, get: get, update: update, delete: delete}
 }
 
-// Create godoc
-// @Summary Cria uma categoria
-// @Tags categories
-// @Accept json
-// @Produce json
-// @Param category body categoryRequest true "Categoria"
-// @Success 201 {object} categoryResponse
-// @Failure 400 {object} map[string]string
-// @Router /categories [post]
 func (c *Controller) Create(w http.ResponseWriter, r *http.Request) {
 	var request categoryRequest
 	if !decodeJSON(w, r, &request) {
@@ -58,17 +49,6 @@ func (c *Controller) Create(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, http.StatusCreated, responseFromCreate(*output))
 }
 
-// List godoc
-// @Summary Lista categorias
-// @Tags categories
-// @Produce json
-// @Param page query int false "Página"
-// @Param per_page query int false "Itens por página"
-// @Param terms query string false "Termo de busca"
-// @Param sort query string false "Campo de ordenação"
-// @Param direction query string false "Direção da ordenação"
-// @Success 200 {object} categoryListResponse
-// @Router /categories [get]
 func (c *Controller) List(w http.ResponseWriter, r *http.Request) {
 	page := queryInt(r, "page", 1)
 	perPage := queryInt(r, "per_page", 10)
@@ -86,14 +66,6 @@ func (c *Controller) List(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, http.StatusOK, categoryListResponse{CurrentPage: output.CurrentPage, PerPage: output.PerPage, Total: output.Total, Items: items})
 }
 
-// Get godoc
-// @Summary Busca uma categoria
-// @Tags categories
-// @Produce json
-// @Param id path string true "ID da categoria"
-// @Success 200 {object} categoryResponse
-// @Failure 404 {object} map[string]string
-// @Router /categories/{id} [get]
 func (c *Controller) Get(w http.ResponseWriter, r *http.Request) {
 	id := pathID(r)
 	var command getcategory.CategoryCommand
@@ -105,17 +77,6 @@ func (c *Controller) Get(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, http.StatusOK, responseFromGet(*output))
 }
 
-// Update godoc
-// @Summary Atualiza uma categoria
-// @Tags categories
-// @Accept json
-// @Produce json
-// @Param id path string true "ID da categoria"
-// @Param category body categoryRequest true "Categoria"
-// @Success 200 {object} categoryResponse
-// @Failure 400 {object} map[string]string
-// @Failure 404 {object} map[string]string
-// @Router /categories/{id} [put]
 func (c *Controller) Update(w http.ResponseWriter, r *http.Request) {
 	var request categoryRequest
 	if !decodeJSON(w, r, &request) {
@@ -130,12 +91,6 @@ func (c *Controller) Update(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, http.StatusOK, responseFromUpdate(*output))
 }
 
-// Delete godoc
-// @Summary Exclui uma categoria
-// @Tags categories
-// @Param id path string true "ID da categoria"
-// @Success 204
-// @Router /categories/{id} [delete]
 func (c *Controller) Delete(w http.ResponseWriter, r *http.Request) {
 	var command deletecategory.CategoryCommand
 	if err := c.delete.Execute(r.Context(), command.With(pathID(r))); err != nil {

@@ -10,7 +10,6 @@ import (
 	"syscall"
 	"time"
 
-	_ "github.com/danyukod/codeflix-catalog-admin/docs"
 	createcategory "github.com/danyukod/codeflix-catalog-admin/internal/application/category/create"
 	deletecategory "github.com/danyukod/codeflix-catalog-admin/internal/application/category/delete"
 	getcategory "github.com/danyukod/codeflix-catalog-admin/internal/application/category/retrieve/get"
@@ -22,12 +21,6 @@ import (
 	categorycontroller "github.com/danyukod/codeflix-catalog-admin/internal/interfaces/http/controller/category"
 	"gopkg.in/yaml.v3"
 )
-
-// @title Codeflix Catalog Admin API
-// @version 1.0
-// @description API administrativa do catálogo Codeflix.
-// @host localhost:8080
-// @BasePath /
 
 type Config struct {
 	Server     ServerConfig     `yaml:"server"`
