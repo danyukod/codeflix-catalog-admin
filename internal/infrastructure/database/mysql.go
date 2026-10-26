@@ -76,7 +76,10 @@ func (c *Connection) Pool() *sql.DB {
 // Close closes the connection pool.
 func (c *Connection) Close() {
 	if c.db != nil {
-		c.db.Close()
+		err := c.db.Close()
+		if err != nil {
+			return
+		}
 	}
 }
 
