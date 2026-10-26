@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"database/sql"
 	"errors"
 	"fmt"
 	"log"
@@ -108,50 +109,71 @@ func loadConfig(path string) (*Config, error) {
 }
 
 func main() {
+	if err := run(); err != nil {
+		log.Fatal(err)
+	}
+}
+
+func run() error {
 	cfg, err := loadConfig("configs/application.yaml")
 	if err != nil {
-		log.Fatalf("failed to load config: %v", err)
+		return fmt.Errorf("load config: %w", err)
 	}
 
 	ctx, cancel := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM)
 	defer cancel()
 
-	// Parse connection max lifetime
-	maxLifetime, err := cfg.Database.ParsedConnectionMaxLifetime()
+	dbConn, err := connectDatabase(ctx, cfg.Database)
 	if err != nil {
-		log.Fatalf("failed to parse connection max lifetime: %v", err)
-	}
-
-	// Create database connection
-	dbConfig := database.Config{
-		Host:                  cfg.Database.Host,
-		Port:                  cfg.Database.Port,
-		Name:                  cfg.Database.Name,
-		User:                  cfg.Database.User,
-		Password:              cfg.Database.Password,
-		SSLMode:               cfg.Database.SSLMode,
-		MaxOpenConnections:    cfg.Database.MaxOpenConnections,
-		MaxIdleConnections:    cfg.Database.MaxIdleConnections,
-		ConnectionMaxLifetime: maxLifetime,
-	}
-
-	dbConn, err := database.NewConnection(ctx, dbConfig)
-	if err != nil {
-		log.Fatalf("failed to connect to database: %v", err)
+		return err
 	}
 	defer dbConn.Close()
-
 	fmt.Println("Successfully connected to database")
 
-	// Run migrations
 	if err := dbConn.RunMigrations(ctx); err != nil {
-		log.Fatalf("failed to run migrations: %v", err)
+		return fmt.Errorf("run migrations: %w", err)
 	}
-
 	fmt.Println("Migrations executed successfully")
 
-	// Create category repository
-	repo := category.NewRepository(dbConn.Pool())
+	server := newHTTPServer(cfg.Server, dbConn.Pool())
+	go serveHTTP(server)
+	fmt.Printf("Server listening on %s\n", server.Addr)
+
+	<-ctx.Done()
+	fmt.Println("Shutting down server...")
+	shutdownCtx, shutdownCancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer shutdownCancel()
+	if err := server.Shutdown(shutdownCtx); err != nil {
+		return fmt.Errorf("shutdown HTTP server: %w", err)
+	}
+	return nil
+}
+
+func connectDatabase(ctx context.Context, cfg DatabaseConfig) (*database.Connection, error) {
+	maxLifetime, err := cfg.ParsedConnectionMaxLifetime()
+	if err != nil {
+		return nil, fmt.Errorf("parse connection max lifetime: %w", err)
+	}
+
+	dbConn, err := database.NewConnection(ctx, database.Config{
+		Host:                  cfg.Host,
+		Port:                  cfg.Port,
+		Name:                  cfg.Name,
+		User:                  cfg.User,
+		Password:              cfg.Password,
+		SSLMode:               cfg.SSLMode,
+		MaxOpenConnections:    cfg.MaxOpenConnections,
+		MaxIdleConnections:    cfg.MaxIdleConnections,
+		ConnectionMaxLifetime: maxLifetime,
+	})
+	if err != nil {
+		return nil, fmt.Errorf("connect to database: %w", err)
+	}
+	return dbConn, nil
+}
+
+func newHTTPServer(cfg ServerConfig, db *sql.DB) *http.Server {
+	repo := category.NewRepository(db)
 	controller := categorycontroller.NewController(
 		createcategory.NewCreateCategoryUseCase(repo),
 		listcategory.NewListCategoryUseCase(repo),
@@ -159,21 +181,11 @@ func main() {
 		updatecategory.NewUpdateCategoryUsecase(repo),
 		deletecategory.NewDeleteCategoryUseCase(repo),
 	)
-	server := &http.Server{Addr: fmt.Sprintf("%s:%d", cfg.Server.Host, cfg.Server.Port), Handler: apphttp.NewRouter(controller)}
-	go func() {
-		if err := server.ListenAndServe(); err != nil && !errors.Is(err, http.ErrServerClosed) {
-			log.Printf("HTTP server error: %v", err)
-		}
-	}()
+	return &http.Server{Addr: fmt.Sprintf("%s:%d", cfg.Host, cfg.Port), Handler: apphttp.NewRouter(controller)}
+}
 
-	fmt.Printf("Server listening on %s:%d\n", cfg.Server.Host, cfg.Server.Port)
-
-	// Wait for shutdown signal
-	<-ctx.Done()
-	fmt.Println("Shutting down server...")
-	shutdownCtx, shutdownCancel := context.WithTimeout(context.Background(), 5*time.Second)
-	defer shutdownCancel()
-	if err := server.Shutdown(shutdownCtx); err != nil {
-		log.Printf("failed to shutdown HTTP server: %v", err)
+func serveHTTP(server *http.Server) {
+	if err := server.ListenAndServe(); err != nil && !errors.Is(err, http.ErrServerClosed) {
+		log.Printf("HTTP server error: %v", err)
 	}
 }
