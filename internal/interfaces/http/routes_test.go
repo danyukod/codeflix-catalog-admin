@@ -30,3 +30,23 @@ func TestDocumentationRoutes(t *testing.T) {
 		})
 	}
 }
+
+func TestRouterRejectsUnsupportedRoutes(t *testing.T) {
+	router := NewRouter(nil)
+	for _, tc := range []struct {
+		name, method, path string
+		wantStatus         int
+	}{
+		{"wrong method for docs", http.MethodPost, "/docs", http.StatusMethodNotAllowed},
+		{"wrong method for category", http.MethodPost, "/categories/123", http.StatusMethodNotAllowed},
+		{"extra category path segment", http.MethodGet, "/categories/123/extra", http.StatusNotFound},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			response := httptest.NewRecorder()
+			router.ServeHTTP(response, httptest.NewRequest(tc.method, tc.path, nil))
+			if response.Code != tc.wantStatus {
+				t.Fatalf("%s %s: status %d, want %d", tc.method, tc.path, response.Code, tc.wantStatus)
+			}
+		})
+	}
+}

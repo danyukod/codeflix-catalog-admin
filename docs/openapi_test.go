@@ -38,7 +38,7 @@ func walkRefs(t *testing.T, root map[string]any, value any) int {
 				t.Fatalf("unsupported external reference: %s", ref)
 			}
 			var target any = root
-			for _, segment := range strings.Split(strings.TrimPrefix(ref, "#/"), "/") {
+			for segment := range strings.SplitSeq(strings.TrimPrefix(ref, "#/"), "/") {
 				object, ok := target.(map[string]any)
 				if !ok {
 					t.Fatalf("invalid reference: %s", ref)

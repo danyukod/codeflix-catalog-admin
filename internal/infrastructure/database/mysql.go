@@ -1,12 +1,13 @@
 package database
 
 import (
+	"cmp"
 	"context"
 	"database/sql"
 	"embed"
 	"errors"
 	"fmt"
-	"sort"
+	"slices"
 	"strings"
 	"time"
 
@@ -115,8 +116,8 @@ func (c *Connection) RunMigrations(ctx context.Context) error {
 	}
 
 	// Sort by name
-	sort.Slice(migrations, func(i, j int) bool {
-		return migrations[i].name < migrations[j].name
+	slices.SortFunc(migrations, func(a, b migration) int {
+		return cmp.Compare(a.name, b.name)
 	})
 
 	// Execute each migration
@@ -131,8 +132,7 @@ func (c *Connection) RunMigrations(ctx context.Context) error {
 
 			if _, err := c.db.ExecContext(ctx, stmt); err != nil {
 				// Ignore duplicate key errors (e.g., rerunning CREATE INDEX on existing indexes)
-				var mysqlErr *mysql.MySQLError
-				if errors.As(err, &mysqlErr) && mysqlErr.Number == 1061 {
+				if mysqlErr, ok := errors.AsType[*mysql.MySQLError](err); ok && mysqlErr.Number == 1061 {
 					continue
 				}
 				return fmt.Errorf("execute migration %s: %w", m.name, err)
@@ -148,7 +148,7 @@ func splitSQLStatements(sql string) []string {
 	var statements []string
 	var current strings.Builder
 
-	for _, line := range strings.Split(sql, "\n") {
+	for line := range strings.SplitSeq(sql, "\n") {
 		trimmed := strings.TrimSpace(line)
 		// Skip comments
 		if strings.HasPrefix(trimmed, "--") {
