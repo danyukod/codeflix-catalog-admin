@@ -67,7 +67,7 @@ func (c *Controller) List(w http.ResponseWriter, r *http.Request) {
 }
 
 func (c *Controller) Get(w http.ResponseWriter, r *http.Request) {
-	id := pathID(r)
+	id := r.PathValue("id")
 	var command getcategory.CategoryCommand
 	output, err := c.get.Execute(r.Context(), command.With(id))
 	if err != nil {
@@ -83,7 +83,7 @@ func (c *Controller) Update(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	var command updatecategory.CategoryCommand
-	output, err := c.update.Execute(r.Context(), command.With(pathID(r), request.Name, request.Description, request.IsActive))
+	output, err := c.update.Execute(r.Context(), command.With(r.PathValue("id"), request.Name, request.Description, request.IsActive))
 	if err != nil {
 		writeError(w, err)
 		return
@@ -93,7 +93,7 @@ func (c *Controller) Update(w http.ResponseWriter, r *http.Request) {
 
 func (c *Controller) Delete(w http.ResponseWriter, r *http.Request) {
 	var command deletecategory.CategoryCommand
-	if err := c.delete.Execute(r.Context(), command.With(pathID(r))); err != nil {
+	if err := c.delete.Execute(r.Context(), command.With(r.PathValue("id"))); err != nil {
 		writeError(w, err)
 		return
 	}
@@ -165,11 +165,4 @@ func queryInt(r *http.Request, key string, fallback int) int {
 		return fallback
 	}
 	return value
-}
-func pathID(r *http.Request) string {
-	parts := strings.Split(strings.Trim(r.URL.Path, "/"), "/")
-	if len(parts) == 0 {
-		return ""
-	}
-	return parts[len(parts)-1]
 }

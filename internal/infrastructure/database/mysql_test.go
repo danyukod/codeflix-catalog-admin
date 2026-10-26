@@ -1,7 +1,6 @@
 package database
 
 import (
-	"context"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -119,7 +118,7 @@ func TestConfig(t *testing.T) {
 
 func TestNewConnection(t *testing.T) {
 	t.Run("given invalid host when creating connection should return error", func(t *testing.T) {
-		ctx := context.Background()
+		ctx := t.Context()
 		cfg := Config{
 			Host:               "nonexistent-host-12345.invalid",
 			Port:               3306,
@@ -137,7 +136,7 @@ func TestNewConnection(t *testing.T) {
 	})
 
 	t.Run("given invalid port when creating connection should return error", func(t *testing.T) {
-		ctx := context.Background()
+		ctx := t.Context()
 		cfg := Config{
 			Host:               "localhost",
 			Port:               99999,
@@ -177,7 +176,7 @@ func TestConnection_Close(t *testing.T) {
 
 func TestRunMigrations(t *testing.T) {
 	t.Run("given nil database when running migrations should panic", func(t *testing.T) {
-		ctx := context.Background()
+		ctx := t.Context()
 		conn := &Connection{db: nil}
 
 		assert.Panics(t, func() {

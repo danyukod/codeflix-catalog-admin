@@ -31,8 +31,7 @@ func (r *Repository) Create(ctx context.Context, cat *category.Category) (*categ
 
 	var deletedAt *time.Time
 	if !cat.IsActive() {
-		t := cat.GetUpdatedAt()
-		deletedAt = &t
+		deletedAt = new(cat.GetUpdatedAt())
 	}
 
 	_, err := r.db.ExecContext(ctx, query,
@@ -239,7 +238,7 @@ func (r *Repository) ExistsByIDs(ctx context.Context, ids []category.Id) ([]cate
 
 	// Build placeholder list
 	placeholders := make([]string, len(ids))
-	args := make([]interface{}, len(ids))
+	args := make([]any, len(ids))
 	for i, id := range ids {
 		placeholders[i] = "?"
 		args[i] = id.GetValue()
