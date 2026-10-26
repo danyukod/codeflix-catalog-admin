@@ -1,0 +1,154 @@
+openapi: 3.1.2
+info:
+  title: Codeflix Catalog Admin API
+  description: API administrativa do catálogo Codeflix.
+  version: "1.0"
+servers:
+  - url: http://localhost:8080
+tags:
+  - name: categories
+    description: Operações de categorias
+paths:
+  /categories:
+    get:
+      tags: [categories]
+      summary: Lista categorias
+      parameters:
+        - name: page
+          in: query
+          description: Página
+          schema: {type: integer, minimum: 1, default: 1}
+        - name: per_page
+          in: query
+          description: Itens por página
+          schema: {type: integer, minimum: 1, default: 10}
+        - name: terms
+          in: query
+          description: Termo de busca
+          schema: {type: string}
+        - name: sort
+          in: query
+          description: Campo de ordenação
+          schema: {type: string}
+        - name: direction
+          in: query
+          description: Direção da ordenação
+          schema: {type: string}
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/CategoryListResponse'}
+    post:
+      tags: [categories]
+      summary: Cria uma categoria
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: {$ref: '#/components/schemas/CategoryRequest'}
+      responses:
+        '201':
+          description: Created
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/CategoryResponse'}
+        '400': {$ref: '#/components/responses/BadRequest'}
+  /categories/{id}:
+    parameters:
+      - name: id
+        in: path
+        required: true
+        description: ID da categoria
+        schema: {type: string}
+    get:
+      tags: [categories]
+      summary: Busca uma categoria
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/CategoryResponse'}
+        '404': {$ref: '#/components/responses/NotFound'}
+    put:
+      tags: [categories]
+      summary: Atualiza uma categoria
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: {$ref: '#/components/schemas/CategoryRequest'}
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/CategoryResponse'}
+        '400': {$ref: '#/components/responses/BadRequest'}
+        '404': {$ref: '#/components/responses/NotFound'}
+    patch:
+      tags: [categories]
+      summary: Atualiza parcialmente uma categoria
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: {$ref: '#/components/schemas/CategoryRequest'}
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/CategoryResponse'}
+        '400': {$ref: '#/components/responses/BadRequest'}
+        '404': {$ref: '#/components/responses/NotFound'}
+    delete:
+      tags: [categories]
+      summary: Exclui uma categoria
+      responses:
+        '204': {description: No Content}
+components:
+  responses:
+    BadRequest:
+      description: Bad Request
+      content:
+        application/json:
+          schema: {$ref: '#/components/schemas/Error'}
+    NotFound:
+      description: Not Found
+      content:
+        application/json:
+          schema: {$ref: '#/components/schemas/Error'}
+  schemas:
+    CategoryRequest:
+      type: object
+      properties:
+        name: {type: string}
+        description: {type: string}
+        is_active: {type: boolean}
+    CategoryResponse:
+      type: object
+      properties:
+        id: {type: string}
+        name: {type: string}
+        description: {type: string}
+        is_active: {type: boolean}
+        created_at: {type: string, format: date-time}
+        updated_at: {type: string, format: date-time}
+        deleted_at: {type: [string, 'null'], format: date-time}
+    CategoryListResponse:
+      type: object
+      properties:
+        current_page: {type: integer}
+        per_page: {type: integer}
+        total: {type: integer, format: int64}
+        items:
+          type: array
+          items: {$ref: '#/components/schemas/CategoryResponse'}
+    Error:
+      type: object
+      required: [error]
+      properties:
+        error: {type: string}

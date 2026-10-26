@@ -181,7 +181,10 @@ func TestRunMigrations(t *testing.T) {
 		conn := &Connection{db: nil}
 
 		assert.Panics(t, func() {
-			conn.RunMigrations(ctx)
+			err := conn.RunMigrations(ctx)
+			if err != nil {
+				return
+			}
 		})
 	})
 }

@@ -11,23 +11,23 @@ const (
 	NameMinLength = 3
 )
 
-type CategoryValidator struct {
+type Validator struct {
 	category *Category
-	handler  validation.ValidationHandler
+	handler  validation.Handler
 }
 
-func NewCategoryValidator(aCategory *Category, aHandler validation.ValidationHandler) *CategoryValidator {
-	return &CategoryValidator{
+func NewCategoryValidator(aCategory *Category, aHandler validation.Handler) *Validator {
+	return &Validator{
 		category: aCategory,
 		handler:  aHandler,
 	}
 }
 
-func (v *CategoryValidator) Validate() {
+func (v *Validator) Validate() {
 	v.checkNameConstraints()
 }
 
-func (v *CategoryValidator) checkNameConstraints() {
+func (v *Validator) checkNameConstraints() {
 	name := v.category.GetName()
 
 	if strings.TrimSpace(name) == "" {

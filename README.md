@@ -37,3 +37,7 @@ To run the admin service:
 go run cmd/admin/main.go
 ```
 
+## API documentation
+
+The OpenAPI 3.1.2 specification is in [`docs/openapi.yaml`](docs/openapi.yaml) and is served at `GET /openapi.yaml` when the application is running. Open `http://localhost:8080/docs` for the visual Swagger UI documentation. The page loads Swagger UI 5.33.1 assets from jsDelivr, so the browser needs internet access. The same specification can be opened in GoLand to navigate schemas.
+

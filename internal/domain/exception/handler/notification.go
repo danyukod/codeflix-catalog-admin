@@ -10,12 +10,12 @@ func NewNotification() *Notification {
 	return &Notification{errors: make([]validation.Error, 0)}
 }
 
-func (n *Notification) Append(err validation.Error) validation.ValidationHandler {
+func (n *Notification) Append(err validation.Error) validation.Handler {
 	n.errors = append(n.errors, err)
 	return n
 }
 
-func (n *Notification) AppendHandler(handler validation.ValidationHandler) validation.ValidationHandler {
+func (n *Notification) AppendHandler(handler validation.Handler) validation.Handler {
 	n.errors = append(n.errors, handler.GetErrors()...)
 	return n
 }

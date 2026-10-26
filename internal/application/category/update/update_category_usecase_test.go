@@ -32,7 +32,7 @@ func TestUpdateCategoryUsecase(t *testing.T) {
 			expectedID.GetValue(),
 			expectedName,
 			expectedDescription,
-			expectedIsActive,
+			true,
 		)
 
 		gateway.On("FindById", mock.Anything, expectedID).Return(aCategory, nil).Once()
@@ -66,7 +66,6 @@ func TestUpdateCategoryUsecase(t *testing.T) {
 
 		expectedName := "Filmes"
 		expectedDescription := "A categoria mais assistida"
-		expectedIsActive := true
 		expectedID := aCategory.GetId()
 
 		var cmd CategoryCommand
@@ -74,7 +73,7 @@ func TestUpdateCategoryUsecase(t *testing.T) {
 			expectedID.GetValue(),
 			expectedName,
 			expectedDescription,
-			expectedIsActive,
+			true,
 		)
 
 		expectedErr := errors.New("generic gateway error")
@@ -97,7 +96,6 @@ func TestUpdateCategoryUsecase(t *testing.T) {
 		aCategory := category.NewCategory("Film", "", true)
 		expectedName := ""
 		expectedDescription := "A categoria mais assistida"
-		expectedIsActive := true
 		expectedID := aCategory.GetId()
 
 		var cmd CategoryCommand
@@ -105,7 +103,7 @@ func TestUpdateCategoryUsecase(t *testing.T) {
 			expectedID.GetValue(),
 			expectedName,
 			expectedDescription,
-			expectedIsActive,
+			true,
 		)
 
 		gateway.On("FindById", mock.Anything, expectedID).Return(aCategory, nil).Once()
