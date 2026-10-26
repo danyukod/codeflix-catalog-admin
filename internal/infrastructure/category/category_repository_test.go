@@ -1,7 +1,6 @@
 package category
 
 import (
-	"context"
 	"database/sql"
 	"testing"
 	"time"
@@ -57,7 +56,7 @@ func TestRepository_Create(t *testing.T) {
 		repo := NewRepository(db)
 
 		cat := createTestCategory(t, "Electronics", "Electronic devices and gadgets")
-		result, err := repo.Create(context.Background(), cat)
+		result, err := repo.Create(t.Context(), cat)
 
 		require.NoError(t, err)
 		assert.NotNil(t, result)
@@ -76,7 +75,7 @@ func TestRepository_Create(t *testing.T) {
 		repo := NewRepository(db)
 
 		cat := category.NewCategory("Books", "Physical books", false)
-		_, err := repo.Create(context.Background(), cat)
+		_, err := repo.Create(t.Context(), cat)
 		require.NoError(t, err)
 
 		var deletedAt *time.Time
@@ -90,11 +89,11 @@ func TestRepository_Create(t *testing.T) {
 		repo := NewRepository(db)
 
 		cat := createTestCategory(t, "Electronics", "Electronic devices")
-		_, err := repo.Create(context.Background(), cat)
+		_, err := repo.Create(t.Context(), cat)
 		require.NoError(t, err)
 
 		// Try to insert the same category again (duplicate primary key)
-		_, err = repo.Create(context.Background(), cat)
+		_, err = repo.Create(t.Context(), cat)
 		assert.Error(t, err)
 		assert.Contains(t, err.Error(), "create category")
 	})
@@ -106,10 +105,10 @@ func TestRepository_FindById(t *testing.T) {
 		repo := NewRepository(db)
 
 		cat := createTestCategory(t, "Movies", "Film and movie categories")
-		_, err := repo.Create(context.Background(), cat)
+		_, err := repo.Create(t.Context(), cat)
 		require.NoError(t, err)
 
-		result, err := repo.FindById(context.Background(), cat.GetId().(category.Id))
+		result, err := repo.FindById(t.Context(), cat.GetId().(category.Id))
 
 		require.NoError(t, err)
 		assert.NotNil(t, result)
@@ -124,7 +123,7 @@ func TestRepository_FindById(t *testing.T) {
 		repo := NewRepository(db)
 
 		nonExistentID := category.Unique()
-		_, err := repo.FindById(context.Background(), nonExistentID)
+		_, err := repo.FindById(t.Context(), nonExistentID)
 
 		assert.Error(t, err)
 		assert.Contains(t, err.Error(), "category not found")
@@ -141,7 +140,7 @@ func TestRepository_FindById(t *testing.T) {
 		`, cat.GetId().GetValue(), cat.GetName(), cat.IsActive(), cat.GetCreatedAt(), cat.GetUpdatedAt())
 		require.NoError(t, err)
 
-		result, err := repo.FindById(context.Background(), cat.GetId().(category.Id))
+		result, err := repo.FindById(t.Context(), cat.GetId().(category.Id))
 
 		require.NoError(t, err)
 		assert.Empty(t, result.GetDescription())
@@ -152,7 +151,7 @@ func TestRepository_FindById(t *testing.T) {
 		repo := NewRepository(db)
 
 		cat := createTestCategory(t, "Deleted", "Soft deleted category")
-		_, err := repo.Create(context.Background(), cat)
+		_, err := repo.Create(t.Context(), cat)
 		require.NoError(t, err)
 
 		// Soft delete the category
@@ -160,7 +159,7 @@ func TestRepository_FindById(t *testing.T) {
 		_, err = db.Exec("UPDATE categories SET active = 0, deleted_at = ? WHERE id = ?", now, cat.GetId().GetValue())
 		require.NoError(t, err)
 
-		result, err := repo.FindById(context.Background(), cat.GetId().(category.Id))
+		result, err := repo.FindById(t.Context(), cat.GetId().(category.Id))
 
 		require.NoError(t, err)
 		assert.NotNil(t, result)
@@ -174,17 +173,17 @@ func TestRepository_Update(t *testing.T) {
 		repo := NewRepository(db)
 
 		cat := createTestCategory(t, "Original Name", "Original description")
-		_, err := repo.Create(context.Background(), cat)
+		_, err := repo.Create(t.Context(), cat)
 		require.NoError(t, err)
 
 		// Update the category
 		cat.Update("Updated Name", "Updated description", true)
-		err = repo.Update(context.Background(), cat)
+		err = repo.Update(t.Context(), cat)
 
 		require.NoError(t, err)
 
 		// Verify in database
-		result, err := repo.FindById(context.Background(), cat.GetId().(category.Id))
+		result, err := repo.FindById(t.Context(), cat.GetId().(category.Id))
 		require.NoError(t, err)
 		assert.Equal(t, "Updated Name", result.GetName())
 		assert.Equal(t, "Updated description", result.GetDescription())
@@ -195,7 +194,7 @@ func TestRepository_Update(t *testing.T) {
 		repo := NewRepository(db)
 
 		cat := createTestCategory(t, "NonExistent", "Does not exist")
-		err := repo.Update(context.Background(), cat)
+		err := repo.Update(t.Context(), cat)
 
 		assert.Error(t, err)
 		assert.Contains(t, err.Error(), "category not found")
@@ -206,14 +205,14 @@ func TestRepository_Update(t *testing.T) {
 		repo := NewRepository(db)
 
 		cat := createTestCategory(t, "ToDeactivate", "Will be deactivated")
-		_, err := repo.Create(context.Background(), cat)
+		_, err := repo.Create(t.Context(), cat)
 		require.NoError(t, err)
 
 		cat.Deactivate()
-		err = repo.Update(context.Background(), cat)
+		err = repo.Update(t.Context(), cat)
 		require.NoError(t, err)
 
-		result, err := repo.FindById(context.Background(), cat.GetId().(category.Id))
+		result, err := repo.FindById(t.Context(), cat.GetId().(category.Id))
 		require.NoError(t, err)
 		assert.False(t, result.IsActive())
 		assert.NotNil(t, result.GetDeletedAt())
@@ -226,10 +225,10 @@ func TestRepository_DeleteById(t *testing.T) {
 		repo := NewRepository(db)
 
 		cat := createTestCategory(t, "ToDelete", "Will be deleted")
-		_, err := repo.Create(context.Background(), cat)
+		_, err := repo.Create(t.Context(), cat)
 		require.NoError(t, err)
 
-		err = repo.DeleteById(context.Background(), cat.GetId().(category.Id))
+		err = repo.DeleteById(t.Context(), cat.GetId().(category.Id))
 		require.NoError(t, err)
 
 		// Verify soft delete in database
@@ -246,7 +245,7 @@ func TestRepository_DeleteById(t *testing.T) {
 		repo := NewRepository(db)
 
 		nonExistentID := category.Unique()
-		err := repo.DeleteById(context.Background(), nonExistentID)
+		err := repo.DeleteById(t.Context(), nonExistentID)
 
 		assert.Error(t, err)
 		assert.Contains(t, err.Error(), "category not found")
@@ -257,15 +256,15 @@ func TestRepository_DeleteById(t *testing.T) {
 		repo := NewRepository(db)
 
 		cat := createTestCategory(t, "AlreadyDeleted", "Already soft deleted")
-		_, err := repo.Create(context.Background(), cat)
+		_, err := repo.Create(t.Context(), cat)
 		require.NoError(t, err)
 
 		// First delete
-		err = repo.DeleteById(context.Background(), cat.GetId().(category.Id))
+		err = repo.DeleteById(t.Context(), cat.GetId().(category.Id))
 		require.NoError(t, err)
 
 		// Second delete should fail
-		err = repo.DeleteById(context.Background(), cat.GetId().(category.Id))
+		err = repo.DeleteById(t.Context(), cat.GetId().(category.Id))
 		assert.Error(t, err)
 		assert.Contains(t, err.Error(), "category not found")
 	})
@@ -277,7 +276,7 @@ func TestRepository_FindAll(t *testing.T) {
 		repo := NewRepository(db)
 
 		query := pagination.NewSearchQuery(1, 10, "", "name", "ASC")
-		result, err := repo.FindAll(context.Background(), query)
+		result, err := repo.FindAll(t.Context(), query)
 
 		require.NoError(t, err)
 		assert.Equal(t, int64(0), result.Total)
@@ -297,7 +296,7 @@ func TestRepository_FindAll(t *testing.T) {
 		`, cat.GetId().GetValue(), cat.GetName(), cat.IsActive(), cat.GetCreatedAt(), cat.GetUpdatedAt())
 		require.NoError(t, err)
 
-		result, err := repo.FindAll(context.Background(), pagination.NewSearchQuery(1, 10, "", "name", "ASC"))
+		result, err := repo.FindAll(t.Context(), pagination.NewSearchQuery(1, 10, "", "name", "ASC"))
 
 		require.NoError(t, err)
 		require.Len(t, result.Items, 1)
@@ -311,12 +310,12 @@ func TestRepository_FindAll(t *testing.T) {
 		// Create 3 categories
 		for i := 1; i <= 3; i++ {
 			cat := createTestCategory(t, "Category "+string(rune('A'+i-1)), "Description "+string(rune('A'+i-1)))
-			_, err := repo.Create(context.Background(), cat)
+			_, err := repo.Create(t.Context(), cat)
 			require.NoError(t, err)
 		}
 
 		query := pagination.NewSearchQuery(1, 10, "", "name", "ASC")
-		result, err := repo.FindAll(context.Background(), query)
+		result, err := repo.FindAll(t.Context(), query)
 
 		require.NoError(t, err)
 		assert.Equal(t, int64(3), result.Total)
@@ -330,13 +329,13 @@ func TestRepository_FindAll(t *testing.T) {
 		// Create 5 categories
 		for i := 1; i <= 5; i++ {
 			cat := createTestCategory(t, "Cat"+string(rune('0'+i)), "Desc"+string(rune('0'+i)))
-			_, err := repo.Create(context.Background(), cat)
+			_, err := repo.Create(t.Context(), cat)
 			require.NoError(t, err)
 		}
 
 		// Page 1, 2 per page
 		query := pagination.NewSearchQuery(1, 2, "", "name", "ASC")
-		result, err := repo.FindAll(context.Background(), query)
+		result, err := repo.FindAll(t.Context(), query)
 
 		require.NoError(t, err)
 		assert.Equal(t, int64(5), result.Total)
@@ -345,7 +344,7 @@ func TestRepository_FindAll(t *testing.T) {
 
 		// Page 2, 2 per page
 		query = pagination.NewSearchQuery(2, 2, "", "name", "ASC")
-		result, err = repo.FindAll(context.Background(), query)
+		result, err = repo.FindAll(t.Context(), query)
 
 		require.NoError(t, err)
 		assert.Equal(t, int64(5), result.Total)
@@ -357,15 +356,15 @@ func TestRepository_FindAll(t *testing.T) {
 		db := setupTestDB(t)
 		repo := NewRepository(db)
 
-		_, err := repo.Create(context.Background(), createTestCategory(t, "Electronics", "Electronic devices"))
+		_, err := repo.Create(t.Context(), createTestCategory(t, "Electronics", "Electronic devices"))
 		require.NoError(t, err)
-		_, err = repo.Create(context.Background(), createTestCategory(t, "Books", "Physical books"))
+		_, err = repo.Create(t.Context(), createTestCategory(t, "Books", "Physical books"))
 		require.NoError(t, err)
-		_, err = repo.Create(context.Background(), createTestCategory(t, "Electrical Tools", "Power tools"))
+		_, err = repo.Create(t.Context(), createTestCategory(t, "Electrical Tools", "Power tools"))
 		require.NoError(t, err)
 
 		query := pagination.NewSearchQuery(1, 10, "Electronic", "", "")
-		result, err := repo.FindAll(context.Background(), query)
+		result, err := repo.FindAll(t.Context(), query)
 
 		require.NoError(t, err)
 		// SQLite LIKE is case-insensitive by default
@@ -380,17 +379,17 @@ func TestRepository_FindAll(t *testing.T) {
 		cat1 := createTestCategory(t, "Active", "Active category")
 		cat2 := createTestCategory(t, "Deleted", "Deleted category")
 
-		_, err := repo.Create(context.Background(), cat1)
+		_, err := repo.Create(t.Context(), cat1)
 		require.NoError(t, err)
-		_, err = repo.Create(context.Background(), cat2)
+		_, err = repo.Create(t.Context(), cat2)
 		require.NoError(t, err)
 
 		// Soft delete cat2
-		err = repo.DeleteById(context.Background(), cat2.GetId().(category.Id))
+		err = repo.DeleteById(t.Context(), cat2.GetId().(category.Id))
 		require.NoError(t, err)
 
 		query := pagination.NewSearchQuery(1, 10, "", "name", "ASC")
-		result, err := repo.FindAll(context.Background(), query)
+		result, err := repo.FindAll(t.Context(), query)
 
 		require.NoError(t, err)
 		assert.Equal(t, int64(1), result.Total)
@@ -402,15 +401,15 @@ func TestRepository_FindAll(t *testing.T) {
 		db := setupTestDB(t)
 		repo := NewRepository(db)
 
-		_, err := repo.Create(context.Background(), createTestCategory(t, "Zebra", "Z description"))
+		_, err := repo.Create(t.Context(), createTestCategory(t, "Zebra", "Z description"))
 		require.NoError(t, err)
-		_, err = repo.Create(context.Background(), createTestCategory(t, "Apple", "A description"))
+		_, err = repo.Create(t.Context(), createTestCategory(t, "Apple", "A description"))
 		require.NoError(t, err)
-		_, err = repo.Create(context.Background(), createTestCategory(t, "Mango", "M description"))
+		_, err = repo.Create(t.Context(), createTestCategory(t, "Mango", "M description"))
 		require.NoError(t, err)
 
 		query := pagination.NewSearchQuery(1, 10, "", "name", "ASC")
-		result, err := repo.FindAll(context.Background(), query)
+		result, err := repo.FindAll(t.Context(), query)
 
 		require.NoError(t, err)
 		assert.Len(t, result.Items, 3)
@@ -423,13 +422,13 @@ func TestRepository_FindAll(t *testing.T) {
 		db := setupTestDB(t)
 		repo := NewRepository(db)
 
-		_, err := repo.Create(context.Background(), createTestCategory(t, "B", "B desc"))
+		_, err := repo.Create(t.Context(), createTestCategory(t, "B", "B desc"))
 		require.NoError(t, err)
-		_, err = repo.Create(context.Background(), createTestCategory(t, "A", "A desc"))
+		_, err = repo.Create(t.Context(), createTestCategory(t, "A", "A desc"))
 		require.NoError(t, err)
 
 		query := pagination.NewSearchQuery(1, 10, "", "invalid_column", "ASC")
-		result, err := repo.FindAll(context.Background(), query)
+		result, err := repo.FindAll(t.Context(), query)
 
 		require.NoError(t, err)
 		assert.Len(t, result.Items, 2)
@@ -443,7 +442,7 @@ func TestRepository_ExistsByIDs(t *testing.T) {
 		db := setupTestDB(t)
 		repo := NewRepository(db)
 
-		result, err := repo.ExistsByIDs(context.Background(), []category.Id{})
+		result, err := repo.ExistsByIDs(t.Context(), []category.Id{})
 
 		require.NoError(t, err)
 		assert.Empty(t, result)
@@ -456,14 +455,14 @@ func TestRepository_ExistsByIDs(t *testing.T) {
 		cat1 := createTestCategory(t, "Existing1", "First existing")
 		cat2 := createTestCategory(t, "Existing2", "Second existing")
 
-		_, err := repo.Create(context.Background(), cat1)
+		_, err := repo.Create(t.Context(), cat1)
 		require.NoError(t, err)
-		_, err = repo.Create(context.Background(), cat2)
+		_, err = repo.Create(t.Context(), cat2)
 		require.NoError(t, err)
 
 		nonExistentID := category.Unique()
 		ids := []category.Id{cat1.GetId().(category.Id), nonExistentID, cat2.GetId().(category.Id)}
-		result, err := repo.ExistsByIDs(context.Background(), ids)
+		result, err := repo.ExistsByIDs(t.Context(), ids)
 
 		require.NoError(t, err)
 		assert.Len(t, result, 2)
@@ -481,7 +480,7 @@ func TestRepository_ExistsByIDs(t *testing.T) {
 		repo := NewRepository(db)
 
 		ids := []category.Id{category.Unique(), category.Unique()}
-		result, err := repo.ExistsByIDs(context.Background(), ids)
+		result, err := repo.ExistsByIDs(t.Context(), ids)
 
 		require.NoError(t, err)
 		assert.Empty(t, result)
@@ -492,14 +491,14 @@ func TestRepository_ExistsByIDs(t *testing.T) {
 		repo := NewRepository(db)
 
 		cat := createTestCategory(t, "ToBeDeleted", "Will be deleted")
-		_, err := repo.Create(context.Background(), cat)
+		_, err := repo.Create(t.Context(), cat)
 		require.NoError(t, err)
 
 		// Soft delete
-		err = repo.DeleteById(context.Background(), cat.GetId().(category.Id))
+		err = repo.DeleteById(t.Context(), cat.GetId().(category.Id))
 		require.NoError(t, err)
 
-		result, err := repo.ExistsByIDs(context.Background(), []category.Id{cat.GetId().(category.Id)})
+		result, err := repo.ExistsByIDs(t.Context(), []category.Id{cat.GetId().(category.Id)})
 
 		require.NoError(t, err)
 		assert.Empty(t, result)
