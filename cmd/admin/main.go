@@ -4,15 +4,30 @@ import (
 	"context"
 	"fmt"
 	"log"
+	"net/http"
 	"os"
 	"os/signal"
 	"syscall"
 	"time"
 
+	_ "github.com/danyukod/codeflix-catalog-admin/docs"
+	createcategory "github.com/danyukod/codeflix-catalog-admin/internal/application/category/create"
+	deletecategory "github.com/danyukod/codeflix-catalog-admin/internal/application/category/delete"
+	getcategory "github.com/danyukod/codeflix-catalog-admin/internal/application/category/retrieve/get"
+	listcategory "github.com/danyukod/codeflix-catalog-admin/internal/application/category/retrieve/list"
+	updatecategory "github.com/danyukod/codeflix-catalog-admin/internal/application/category/update"
 	"github.com/danyukod/codeflix-catalog-admin/internal/infrastructure/category"
 	"github.com/danyukod/codeflix-catalog-admin/internal/infrastructure/database"
+	apphttp "github.com/danyukod/codeflix-catalog-admin/internal/interfaces/http"
+	categorycontroller "github.com/danyukod/codeflix-catalog-admin/internal/interfaces/http/controller/category"
 	"gopkg.in/yaml.v3"
 )
+
+// @title Codeflix Catalog Admin API
+// @version 1.0
+// @description API administrativa do catálogo Codeflix.
+// @host localhost:8080
+// @BasePath /
 
 type Config struct {
 	Server     ServerConfig     `yaml:"server"`
@@ -143,11 +158,28 @@ func main() {
 
 	// Create category repository
 	repo := category.NewRepository(dbConn.Pool())
-	_ = repo // Repository is ready to be injected into use cases
+	controller := categorycontroller.NewController(
+		createcategory.NewCreateCategoryUseCase(repo),
+		listcategory.NewListCategoryUseCase(repo),
+		getcategory.NewGetCategoryByIdUseCase(repo),
+		updatecategory.NewUpdateCategoryUsecase(repo),
+		deletecategory.NewDeleteCategoryUseCase(repo),
+	)
+	server := &http.Server{Addr: fmt.Sprintf("%s:%d", cfg.Server.Host, cfg.Server.Port), Handler: apphttp.NewRouter(controller)}
+	go func() {
+		if err := server.ListenAndServe(); err != nil && err != http.ErrServerClosed {
+			log.Printf("HTTP server error: %v", err)
+		}
+	}()
 
 	fmt.Printf("Server listening on %s:%d\n", cfg.Server.Host, cfg.Server.Port)
 
 	// Wait for shutdown signal
 	<-ctx.Done()
 	fmt.Println("Shutting down server...")
+	shutdownCtx, shutdownCancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer shutdownCancel()
+	if err := server.Shutdown(shutdownCtx); err != nil {
+		log.Printf("failed to shutdown HTTP server: %v", err)
+	}
 }

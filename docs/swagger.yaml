@@ -1,0 +1,182 @@
+basePath: /
+definitions:
+  category.categoryListResponse:
+    properties:
+      current_page:
+        type: integer
+      items:
+        items:
+          $ref: '#/definitions/category.categoryResponse'
+        type: array
+      per_page:
+        type: integer
+      total:
+        type: integer
+    type: object
+  category.categoryRequest:
+    properties:
+      description:
+        type: string
+      is_active:
+        type: boolean
+      name:
+        type: string
+    type: object
+  category.categoryResponse:
+    properties:
+      created_at:
+        type: string
+      deleted_at:
+        type: string
+      description:
+        type: string
+      id:
+        type: string
+      is_active:
+        type: boolean
+      name:
+        type: string
+      updated_at:
+        type: string
+    type: object
+host: localhost:8080
+info:
+  contact: {}
+  description: API administrativa do catálogo Codeflix.
+  title: Codeflix Catalog Admin API
+  version: "1.0"
+paths:
+  /categories:
+    get:
+      parameters:
+      - description: Página
+        in: query
+        name: page
+        type: integer
+      - description: Itens por página
+        in: query
+        name: per_page
+        type: integer
+      - description: Termo de busca
+        in: query
+        name: terms
+        type: string
+      - description: Campo de ordenação
+        in: query
+        name: sort
+        type: string
+      - description: Direção da ordenação
+        in: query
+        name: direction
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/category.categoryListResponse'
+      summary: Lista categorias
+      tags:
+      - categories
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: Categoria
+        in: body
+        name: category
+        required: true
+        schema:
+          $ref: '#/definitions/category.categoryRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/category.categoryResponse'
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Cria uma categoria
+      tags:
+      - categories
+  /categories/{id}:
+    delete:
+      parameters:
+      - description: ID da categoria
+        in: path
+        name: id
+        required: true
+        type: string
+      responses:
+        "204":
+          description: No Content
+      summary: Exclui uma categoria
+      tags:
+      - categories
+    get:
+      parameters:
+      - description: ID da categoria
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/category.categoryResponse'
+        "404":
+          description: Not Found
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Busca uma categoria
+      tags:
+      - categories
+    put:
+      consumes:
+      - application/json
+      parameters:
+      - description: ID da categoria
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Categoria
+        in: body
+        name: category
+        required: true
+        schema:
+          $ref: '#/definitions/category.categoryRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/category.categoryResponse'
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "404":
+          description: Not Found
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Atualiza uma categoria
+      tags:
+      - categories
+swagger: "2.0"
