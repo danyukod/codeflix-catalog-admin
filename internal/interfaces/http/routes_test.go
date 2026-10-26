@@ -5,10 +5,18 @@ import (
 	"net/http/httptest"
 	"strings"
 	"testing"
+
+	createcategory "github.com/danyukod/codeflix-catalog-admin/internal/application/category/create"
+	deletecategory "github.com/danyukod/codeflix-catalog-admin/internal/application/category/delete"
+	getcategory "github.com/danyukod/codeflix-catalog-admin/internal/application/category/retrieve/get"
+	listcategory "github.com/danyukod/codeflix-catalog-admin/internal/application/category/retrieve/list"
+	updatecategory "github.com/danyukod/codeflix-catalog-admin/internal/application/category/update"
+	categorycontroller "github.com/danyukod/codeflix-catalog-admin/internal/interfaces/http/controller/category"
+	"github.com/danyukod/codeflix-catalog-admin/internal/tests/mocks"
 )
 
 func TestDocumentationRoutes(t *testing.T) {
-	router := NewRouter(nil)
+	router := NewRouter(testController())
 	for _, tc := range []struct {
 		path, contentType, contains string
 	}{
@@ -32,7 +40,7 @@ func TestDocumentationRoutes(t *testing.T) {
 }
 
 func TestRouterRejectsUnsupportedRoutes(t *testing.T) {
-	router := NewRouter(nil)
+	router := NewRouter(testController())
 	for _, tc := range []struct {
 		name, method, path string
 		wantStatus         int
@@ -49,4 +57,15 @@ func TestRouterRejectsUnsupportedRoutes(t *testing.T) {
 			}
 		})
 	}
+}
+
+func testController() *categorycontroller.Controller {
+	gateway := &mocks.CategoryGatewayMock{}
+	return categorycontroller.NewController(
+		createcategory.NewCreateCategoryUseCase(gateway),
+		listcategory.NewListCategoryUseCase(gateway),
+		getcategory.NewGetCategoryByIdUseCase(gateway),
+		updatecategory.NewUpdateCategoryUsecase(gateway),
+		deletecategory.NewDeleteCategoryUseCase(gateway),
+	)
 }
