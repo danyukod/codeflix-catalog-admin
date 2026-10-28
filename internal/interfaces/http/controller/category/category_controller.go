@@ -8,27 +8,29 @@ import (
 	"strings"
 	"time"
 
+	"github.com/danyukod/codeflix-catalog-admin/internal/application"
 	createcategory "github.com/danyukod/codeflix-catalog-admin/internal/application/category/create"
 	deletecategory "github.com/danyukod/codeflix-catalog-admin/internal/application/category/delete"
 	getcategory "github.com/danyukod/codeflix-catalog-admin/internal/application/category/retrieve/get"
 	listcategory "github.com/danyukod/codeflix-catalog-admin/internal/application/category/retrieve/list"
 	updatecategory "github.com/danyukod/codeflix-catalog-admin/internal/application/category/update"
+	"github.com/danyukod/codeflix-catalog-admin/internal/domain/pagination"
 )
 
 type Controller struct {
-	create *createcategory.CategoryUseCase
-	list   *listcategory.CategoryUseCase
-	get    *getcategory.CategoryUseCase
-	update *updatecategory.CategoryUseCase
-	delete *deletecategory.CategoryUseCase
+	create application.UseCase[*createcategory.CategoryCommand, *createcategory.CategoryOutput]
+	list   application.UseCase[*listcategory.CategoryCommand, pagination.Pagination[listcategory.CategoryOutput]]
+	get    application.UseCase[*getcategory.CategoryCommand, *getcategory.CategoryOutput]
+	update application.UseCase[*updatecategory.CategoryCommand, *updatecategory.CategoryOutput]
+	delete application.UnitUseCase[*deletecategory.CategoryCommand]
 }
 
 func NewController(
-	create *createcategory.CategoryUseCase,
-	list *listcategory.CategoryUseCase,
-	get *getcategory.CategoryUseCase,
-	update *updatecategory.CategoryUseCase,
-	delete *deletecategory.CategoryUseCase,
+	create application.UseCase[*createcategory.CategoryCommand, *createcategory.CategoryOutput],
+	list application.UseCase[*listcategory.CategoryCommand, pagination.Pagination[listcategory.CategoryOutput]],
+	get application.UseCase[*getcategory.CategoryCommand, *getcategory.CategoryOutput],
+	update application.UseCase[*updatecategory.CategoryCommand, *updatecategory.CategoryOutput],
+	delete application.UnitUseCase[*deletecategory.CategoryCommand],
 ) *Controller {
 	return &Controller{create: create, list: list, get: get, update: update, delete: delete}
 }
