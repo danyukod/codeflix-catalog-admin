@@ -43,7 +43,7 @@ func NewConnection(ctx context.Context, cfg Config) (*Connection, error) {
 		tlsConfig = "false"
 	}
 	dsn := fmt.Sprintf(
-		"%s:%s@tcp(%s:%d)/%s?tls=%s",
+		"%s:%s@tcp(%s:%d)/%s?parseTime=true&tls=%s",
 		cfg.User,
 		cfg.Password,
 		cfg.Host,
