@@ -1,43 +1,79 @@
-# codeflix-catalog-admin
+# Codeflix Catalog Admin
 
-A Go-based administrative service for managing the Codeflix video catalog. This project follows Clean Architecture principles and Domain-Driven Design (DDD).
+A Go HTTP service for administering the Codeflix video catalog. The current API manages categories and is organized using Clean Architecture and Domain-Driven Design principles.
 
-## Project Structure
+## Requirements
 
-- `cmd/`: Entry points for the application.
-  - `admin/`: The main administrative application.
-- `internal/`: Private application and library code.
-  - `application/`: Application services and use cases.
-  - `domain/`: Business logic and entities (e.g., Category).
-  - `infrastructure/`: External implementations (database, external APIs).
+- Go 1.27 or later
+- Docker and Docker Compose (for MySQL)
 
-## Getting Started
+## Getting started
 
-### Prerequisites
+Clone the repository and download its dependencies:
 
-- Go 1.25.5 or higher
-
-### Installation
-
-1. Clone the repository:
-   ```bash
-   git clone https://github.com/danyukod/codeflix-catalog-admin.git
-   cd codeflix-catalog-admin
-   ```
-
-2. Install dependencies:
-   ```bash
-   go mod download
-   ```
-
-### Running the application
-
-To run the admin service:
 ```bash
-go run cmd/admin/main.go
+git clone https://github.com/danyukod/codeflix-catalog-admin.git
+cd codeflix-catalog-admin
+go mod download
 ```
 
-## API documentation
+Start the MySQL database used by the default configuration:
 
-The OpenAPI 3.1.2 specification is in [`docs/openapi.yaml`](docs/openapi.yaml) and is served at `GET /openapi.yaml` when the application is running. Open `http://localhost:8080/docs` for the visual Swagger UI documentation. The page loads Swagger UI 5.33.1 assets from jsDelivr, so the browser needs internet access. The same specification can be opened in GoLand to navigate schemas.
+```bash
+docker compose up -d mysql
+```
+
+The compose file creates a database named `shop` with the credentials `shop`/`shop` and publishes MySQL on `localhost:3306`. The application reads its settings from [`configs/application.yaml`](configs/application.yaml).
+
+Run the service:
+
+```bash
+go run ./cmd/admin
+```
+
+The server listens on `http://localhost:8080`. It runs the database migrations automatically at startup.
+
+To stop the database container:
+
+```bash
+docker compose down
+```
+
+## API
+
+The category endpoints are:
+
+| Method | Path | Description |
+| --- | --- | --- |
+| `GET` | `/categories` | List categories, with pagination and filtering |
+| `POST` | `/categories` | Create a category |
+| `GET` | `/categories/{id}` | Retrieve a category |
+| `PUT` | `/categories/{id}` | Replace a category |
+| `PATCH` | `/categories/{id}` | Partially update a category |
+| `DELETE` | `/categories/{id}` | Delete a category |
+
+Interactive API documentation is available at [`http://localhost:8080/docs`](http://localhost:8080/docs). The raw OpenAPI 3.1.2 document is available at [`/openapi.yaml`](http://localhost:8080/openapi.yaml) and in [`docs/openapi.yaml`](docs/openapi.yaml). The Swagger UI loads its assets from jsDelivr, so viewing `/docs` requires internet access.
+
+Example requests are in [`requests/categories.http`](requests/categories.http) and can be run from GoLand or another HTTP client that supports `.http` files.
+
+## Tests
+
+Run the complete test suite with:
+
+```bash
+go test ./...
+```
+
+The integration tests use Testcontainers and require Docker. Unit and repository tests can run without the MySQL container.
+
+## Project structure
+
+- `cmd/admin/`: application entry point
+- `configs/`: runtime configuration
+- `docs/`: embedded OpenAPI specification and Swagger UI
+- `internal/application/`: use cases
+- `internal/domain/`: domain entities, validation, and pagination
+- `internal/infrastructure/`: MySQL connection, migrations, and repositories
+- `internal/interfaces/http/`: HTTP routing and controllers
+- `requests/`: example API requests
 
