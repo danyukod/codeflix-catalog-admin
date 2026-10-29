@@ -155,6 +155,12 @@ components:
           additionalProperties: {type: string, format: uri-reference}
     Error:
       type: object
-      required: [error]
+      required: [type, title, status, detail]
       properties:
-        error: {type: string}
+        type: {type: string, format: uri-reference}
+        title: {type: string}
+        status: {type: integer}
+        detail: {type: string}
+        errors:
+          type: array
+          items: {type: string}

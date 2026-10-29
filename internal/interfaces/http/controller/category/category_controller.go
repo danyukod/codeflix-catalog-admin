@@ -15,6 +15,7 @@ import (
 	listcategory "github.com/danyukod/codeflix-catalog-admin/internal/application/category/retrieve/list"
 	updatecategory "github.com/danyukod/codeflix-catalog-admin/internal/application/category/update"
 	"github.com/danyukod/codeflix-catalog-admin/internal/domain/pagination"
+	"github.com/danyukod/codeflix-catalog-admin/internal/domain/validation"
 	"github.com/google/uuid"
 )
 
@@ -218,8 +219,18 @@ func writeJSON(w http.ResponseWriter, status int, value any) {
 	_ = json.NewEncoder(w).Encode(value)
 }
 func writeError(w http.ResponseWriter, err error) {
+	if validationErr, ok := errors.AsType[*validation.ValidationError](err); ok {
+		writeJSON(w, http.StatusBadRequest, map[string]any{
+			"type":   "https://api.codeflix.com/errors/validation",
+			"title":  "Validation failed",
+			"status": http.StatusBadRequest,
+			"detail": validationErr.Error(),
+			"errors": validationErr.Messages,
+		})
+		return
+	}
 	status := http.StatusInternalServerError
-	if errors.Is(err, strconv.ErrSyntax) || strings.Contains(err.Error(), "validation failed") || strings.Contains(err.Error(), "id cannot be empty") || strings.Contains(err.Error(), "valid UUID") || strings.Contains(err.Error(), "requires name") {
+	if errors.Is(err, strconv.ErrSyntax) || strings.Contains(err.Error(), "id cannot be empty") || strings.Contains(err.Error(), "valid UUID") || strings.Contains(err.Error(), "requires name") {
 		status = http.StatusBadRequest
 	}
 	if strings.Contains(err.Error(), "was not found") {

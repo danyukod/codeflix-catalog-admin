@@ -3,10 +3,10 @@ package update
 import (
 	"context"
 	"fmt"
-	"strings"
 
 	"github.com/danyukod/codeflix-catalog-admin/internal/domain/category"
 	"github.com/danyukod/codeflix-catalog-admin/internal/domain/exception/handler"
+	"github.com/danyukod/codeflix-catalog-admin/internal/domain/validation"
 )
 
 type CategoryUseCase struct {
@@ -48,7 +48,7 @@ func (uc *CategoryUseCase) Execute(ctx context.Context, aCommand *CategoryComman
 	aCategory.Validate(notification)
 
 	if notification.HasError() {
-		return nil, fmt.Errorf("validation failed: %s", joinValidationMessages(notification))
+		return nil, validation.NewValidationError(notification.GetErrors())
 	}
 
 	err = uc.gateway.Update(ctx, aCategory)
@@ -60,17 +60,4 @@ func (uc *CategoryUseCase) Execute(ctx context.Context, aCommand *CategoryComman
 	out := updateCategoryOutput.From(*aCategory)
 
 	return out, nil
-}
-
-func joinValidationMessages(n *handler.Notification) string {
-	errs := n.GetErrors()
-	if len(errs) == 0 {
-		return ""
-	}
-
-	messages := make([]string, 0, len(errs))
-	for _, e := range errs {
-		messages = append(messages, e.Message)
-	}
-	return strings.Join(messages, "; ")
 }
