@@ -56,6 +56,24 @@ Interactive API documentation is available at [`http://localhost:8080/docs`](htt
 
 Example requests are in [`requests/categories.http`](requests/categories.http) and can be run from GoLand or another HTTP client that supports `.http` files.
 
+### REST conventions
+
+- Category IDs must be valid UUIDs. Invalid IDs return `400 Bad Request`; valid IDs that do not exist return `404 Not Found`.
+- `PUT` replaces the category representation and expects `name`, `description`, and `is_active`.
+- `PATCH` accepts any subset of those fields and preserves fields that are not sent.
+- Successful creation returns `201 Created`, includes the resource representation, and sets a `Location` header pointing to `/categories/{id}`.
+- Category representations include `_links.self` and `_links.collection` HATEOAS links. Collection responses include links to the current collection.
+- Errors use a problem-style JSON representation:
+
+  ```json
+  {
+    "type": "about:blank",
+    "title": "Bad Request",
+    "status": 400,
+    "detail": "id must be a valid UUID"
+  }
+  ```
+
 ## Tests
 
 Run the complete test suite with:
