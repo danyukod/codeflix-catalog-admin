@@ -30,5 +30,8 @@ func (i Id) Validate() error {
 	if i.id == "" {
 		return errors.New("id cannot be empty")
 	}
+	if _, err := uuid.Parse(i.id); err != nil {
+		return errors.New("id must be a valid UUID")
+	}
 	return nil
 }

@@ -22,6 +22,15 @@ func TestOpenAPISchemasResolve(t *testing.T) {
 	if _, ok := components["schemas"]; !ok {
 		t.Fatal("missing schemas")
 	}
+	schemas := components["schemas"].(map[string]any)
+	categoryResponse := schemas["CategoryResponse"].(map[string]any)
+	if _, ok := categoryResponse["properties"].(map[string]any)["_links"]; !ok {
+		t.Fatal("CategoryResponse is missing HATEOAS links")
+	}
+	categoryListResponse := schemas["CategoryListResponse"].(map[string]any)
+	if _, ok := categoryListResponse["properties"].(map[string]any)["_links"]; !ok {
+		t.Fatal("CategoryListResponse is missing HATEOAS links")
+	}
 	if count := walkRefs(t, root, root); count == 0 {
 		t.Fatal("no references found")
 	}
