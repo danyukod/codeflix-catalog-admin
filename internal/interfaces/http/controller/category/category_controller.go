@@ -1,12 +1,7 @@
 package category
 
 import (
-	"encoding/json"
-	"errors"
 	"net/http"
-	"strconv"
-	"strings"
-	"time"
 
 	"github.com/danyukod/codeflix-catalog-admin/internal/application"
 	createcategory "github.com/danyukod/codeflix-catalog-admin/internal/application/category/create"
@@ -15,8 +10,6 @@ import (
 	listcategory "github.com/danyukod/codeflix-catalog-admin/internal/application/category/retrieve/list"
 	updatecategory "github.com/danyukod/codeflix-catalog-admin/internal/application/category/update"
 	"github.com/danyukod/codeflix-catalog-admin/internal/domain/pagination"
-	"github.com/danyukod/codeflix-catalog-admin/internal/domain/validation"
-	"github.com/google/uuid"
 )
 
 type Controller struct {
@@ -91,51 +84,50 @@ func (c *Controller) Get(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, http.StatusOK, response)
 }
 
-func (c *Controller) Update(w http.ResponseWriter, r *http.Request) {
+func (c *Controller) Replace(w http.ResponseWriter, r *http.Request) {
 	if !validID(w, r.PathValue("id")) {
-		return
-	}
-	if r.Method == http.MethodPatch {
-		var request categoryPatchRequest
-		if !decodeJSON(w, r, &request) {
-			return
-		}
-		current, err := c.get.Execute(r.Context(), getcategory.CategoryCommand{}.With(r.PathValue("id")))
-		if err != nil {
-			writeError(w, err)
-			return
-		}
-		name, description, active := current.GetName(), current.GetDescription(), current.IsActive()
-		if request.Name != nil {
-			name = *request.Name
-		}
-		if request.Description != nil {
-			description = *request.Description
-		}
-		if request.IsActive != nil {
-			active = *request.IsActive
-		}
-		var command updatecategory.CategoryCommand
-		output, err := c.update.Execute(r.Context(), command.With(r.PathValue("id"), name, description, active))
-		if err != nil {
-			writeError(w, err)
-			return
-		}
-		response := responseFromUpdate(*output)
-		response.Links = categoryLinks(response.ID)
-		writeJSON(w, http.StatusOK, response)
 		return
 	}
 	var request categoryRequest
 	if !decodeJSON(w, r, &request) {
 		return
 	}
-	if request.Name == "" {
-		writeError(w, errors.New("PUT requires name"))
-		return
-	}
 	var command updatecategory.CategoryCommand
 	output, err := c.update.Execute(r.Context(), command.With(r.PathValue("id"), request.Name, request.Description, request.IsActive))
+	if err != nil {
+		writeError(w, err)
+		return
+	}
+	response := responseFromUpdate(*output)
+	response.Links = categoryLinks(response.ID)
+	writeJSON(w, http.StatusOK, response)
+}
+
+func (c *Controller) Patch(w http.ResponseWriter, r *http.Request) {
+	if !validID(w, r.PathValue("id")) {
+		return
+	}
+	var request categoryPatchRequest
+	if !decodeJSON(w, r, &request) {
+		return
+	}
+	current, err := c.get.Execute(r.Context(), getcategory.CategoryCommand{}.With(r.PathValue("id")))
+	if err != nil {
+		writeError(w, err)
+		return
+	}
+	name, description, active := current.GetName(), current.GetDescription(), current.IsActive()
+	if request.Name != nil {
+		name = *request.Name
+	}
+	if request.Description != nil {
+		description = *request.Description
+	}
+	if request.IsActive != nil {
+		active = *request.IsActive
+	}
+	var command updatecategory.CategoryCommand
+	output, err := c.update.Execute(r.Context(), command.With(r.PathValue("id"), name, description, active))
 	if err != nil {
 		writeError(w, err)
 		return
@@ -155,107 +147,4 @@ func (c *Controller) Delete(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	w.WriteHeader(http.StatusNoContent)
-}
-
-type categoryRequest struct {
-	Name        string `json:"name"`
-	Description string `json:"description"`
-	IsActive    bool   `json:"is_active"`
-}
-type categoryPatchRequest struct {
-	Name        *string `json:"name"`
-	Description *string `json:"description"`
-	IsActive    *bool   `json:"is_active"`
-}
-type categoryResponse struct {
-	ID          string            `json:"id"`
-	Name        string            `json:"name"`
-	Description string            `json:"description"`
-	IsActive    bool              `json:"is_active"`
-	CreatedAt   string            `json:"created_at"`
-	UpdatedAt   string            `json:"updated_at"`
-	DeletedAt   *string           `json:"deleted_at,omitempty"`
-	Links       map[string]string `json:"_links"`
-}
-
-type categoryListResponse struct {
-	CurrentPage int                `json:"current_page"`
-	PerPage     int                `json:"per_page"`
-	Total       int64              `json:"total"`
-	Items       []categoryResponse `json:"items"`
-	Links       map[string]string  `json:"_links"`
-}
-
-func responseFromList(o listcategory.CategoryOutput) categoryResponse {
-	return categoryResponse{ID: o.GetId().GetValue(), Name: o.GetName(), Description: o.GetDescription(), IsActive: o.IsActive(), CreatedAt: o.GetCreatedAt().Format("2006-01-02T15:04:05.999Z07:00"), UpdatedAt: o.GetUpdatedAt().Format("2006-01-02T15:04:05.999Z07:00")}
-}
-func responseFromGet(o getcategory.CategoryOutput) categoryResponse {
-	return categoryResponse{ID: o.GetId().GetValue(), Name: o.GetName(), Description: o.GetDescription(), IsActive: o.IsActive(), CreatedAt: o.GetCreatedAt().Format(time.RFC3339Nano), UpdatedAt: o.GetUpdatedAt().Format(time.RFC3339Nano)}
-}
-
-func responseFromCreate(o createcategory.CategoryOutput) categoryResponse {
-	return categoryResponse{ID: o.GetId().GetValue(), Name: o.GetName(), Description: o.GetDescription(), IsActive: o.IsActive(), CreatedAt: o.GetCreatedAt().Format(time.RFC3339Nano), UpdatedAt: o.GetUpdatedAt().Format(time.RFC3339Nano)}
-}
-
-func responseFromUpdate(o updatecategory.CategoryOutput) categoryResponse {
-	return categoryResponse{ID: o.GetId().GetValue(), Name: o.GetName(), Description: o.GetDescription(), IsActive: o.IsActive(), CreatedAt: o.GetCreatedAt().Format(time.RFC3339Nano), UpdatedAt: o.GetUpdatedAt().Format(time.RFC3339Nano)}
-}
-
-func decodeJSON(w http.ResponseWriter, r *http.Request, target any) bool {
-	decoder := json.NewDecoder(r.Body)
-	if err := decoder.Decode(target); err != nil {
-		writeJSON(w, http.StatusBadRequest, map[string]string{"error": "invalid request body"})
-		return false
-	}
-	if decoder.Decode(&struct{}{}) == nil {
-		writeJSON(w, http.StatusBadRequest, map[string]string{"error": "request body must contain a single JSON value"})
-		return false
-	}
-	return true
-}
-func writeJSON(w http.ResponseWriter, status int, value any) {
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(status)
-	_ = json.NewEncoder(w).Encode(value)
-}
-func writeError(w http.ResponseWriter, err error) {
-	if validationErr, ok := errors.AsType[*validation.ValidationError](err); ok {
-		writeJSON(w, http.StatusBadRequest, map[string]any{
-			"type":   "https://api.codeflix.com/errors/validation",
-			"title":  "Validation failed",
-			"status": http.StatusBadRequest,
-			"detail": validationErr.Error(),
-			"errors": validationErr.Messages,
-		})
-		return
-	}
-	status := http.StatusInternalServerError
-	if errors.Is(err, strconv.ErrSyntax) || strings.Contains(err.Error(), "id cannot be empty") || strings.Contains(err.Error(), "valid UUID") || strings.Contains(err.Error(), "requires name") {
-		status = http.StatusBadRequest
-	}
-	if strings.Contains(err.Error(), "was not found") {
-		status = http.StatusNotFound
-	}
-	writeJSON(w, status, map[string]any{"type": "about:blank", "title": http.StatusText(status), "status": status, "detail": err.Error()})
-}
-func queryInt(r *http.Request, key string, fallback int) int {
-	value, err := strconv.Atoi(r.URL.Query().Get(key))
-	if err != nil || value < 1 {
-		return fallback
-	}
-	return value
-}
-
-func validID(w http.ResponseWriter, id string) bool {
-	if _, err := uuid.Parse(id); err != nil {
-		writeError(w, errors.New("id must be a valid UUID"))
-		return false
-	}
-	return true
-}
-
-func categoryURL(id string) string { return "/categories/" + id }
-
-func categoryLinks(id string) map[string]string {
-	return map[string]string{"self": categoryURL(id), "collection": "/categories"}
 }
