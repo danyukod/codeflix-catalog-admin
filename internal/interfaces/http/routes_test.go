@@ -59,6 +59,21 @@ func TestRouterRejectsUnsupportedRoutes(t *testing.T) {
 	}
 }
 
+func TestRouterRejectsInvalidCategoryID(t *testing.T) {
+	router := NewRouter(testController())
+	for _, method := range []string{http.MethodGet, http.MethodPut, http.MethodPatch, http.MethodDelete} {
+		response := httptest.NewRecorder()
+		request := httptest.NewRequest(method, "/categories/not-a-uuid", strings.NewReader(`{}`))
+		router.ServeHTTP(response, request)
+		if response.Code != http.StatusBadRequest {
+			t.Fatalf("%s invalid ID: status %d, want %d", method, response.Code, http.StatusBadRequest)
+		}
+		if !strings.Contains(response.Body.String(), `"detail"`) {
+			t.Fatalf("%s invalid ID: response is not a problem document: %s", method, response.Body.String())
+		}
+	}
+}
+
 func testController() *categorycontroller.Controller {
 	gateway := &mocks.CategoryGatewayMock{}
 	return categorycontroller.NewController(

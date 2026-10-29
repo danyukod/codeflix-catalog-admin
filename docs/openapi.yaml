@@ -138,6 +138,9 @@ components:
         created_at: {type: string, format: date-time}
         updated_at: {type: string, format: date-time}
         deleted_at: {type: [string, 'null'], format: date-time}
+        _links:
+          type: object
+          additionalProperties: {type: string, format: uri-reference}
     CategoryListResponse:
       type: object
       properties:
@@ -147,6 +150,9 @@ components:
         items:
           type: array
           items: {$ref: '#/components/schemas/CategoryResponse'}
+        _links:
+          type: object
+          additionalProperties: {type: string, format: uri-reference}
     Error:
       type: object
       required: [error]

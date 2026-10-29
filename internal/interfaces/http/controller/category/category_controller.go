@@ -15,6 +15,7 @@ import (
 	listcategory "github.com/danyukod/codeflix-catalog-admin/internal/application/category/retrieve/list"
 	updatecategory "github.com/danyukod/codeflix-catalog-admin/internal/application/category/update"
 	"github.com/danyukod/codeflix-catalog-admin/internal/domain/pagination"
+	"github.com/google/uuid"
 )
 
 type Controller struct {
@@ -48,7 +49,10 @@ func (c *Controller) Create(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	writeJSON(w, http.StatusCreated, responseFromCreate(*output))
+	response := responseFromCreate(*output)
+	response.Links = categoryLinks(response.ID)
+	w.Header().Set("Location", categoryURL(response.ID))
+	writeJSON(w, http.StatusCreated, response)
 }
 
 func (c *Controller) List(w http.ResponseWriter, r *http.Request) {
@@ -63,25 +67,70 @@ func (c *Controller) List(w http.ResponseWriter, r *http.Request) {
 
 	items := make([]categoryResponse, 0, len(output.Items))
 	for _, item := range output.Items {
-		items = append(items, responseFromList(item))
+		response := responseFromList(item)
+		response.Links = categoryLinks(response.ID)
+		items = append(items, response)
 	}
-	writeJSON(w, http.StatusOK, categoryListResponse{CurrentPage: output.CurrentPage, PerPage: output.PerPage, Total: output.Total, Items: items})
+	writeJSON(w, http.StatusOK, categoryListResponse{CurrentPage: output.CurrentPage, PerPage: output.PerPage, Total: output.Total, Items: items, Links: map[string]string{"self": r.URL.RequestURI(), "collection": "/categories"}})
 }
 
 func (c *Controller) Get(w http.ResponseWriter, r *http.Request) {
 	id := r.PathValue("id")
+	if !validID(w, id) {
+		return
+	}
 	var command getcategory.CategoryCommand
 	output, err := c.get.Execute(r.Context(), command.With(id))
 	if err != nil {
 		writeError(w, err)
 		return
 	}
-	writeJSON(w, http.StatusOK, responseFromGet(*output))
+	response := responseFromGet(*output)
+	response.Links = categoryLinks(response.ID)
+	writeJSON(w, http.StatusOK, response)
 }
 
 func (c *Controller) Update(w http.ResponseWriter, r *http.Request) {
+	if !validID(w, r.PathValue("id")) {
+		return
+	}
+	if r.Method == http.MethodPatch {
+		var request categoryPatchRequest
+		if !decodeJSON(w, r, &request) {
+			return
+		}
+		current, err := c.get.Execute(r.Context(), getcategory.CategoryCommand{}.With(r.PathValue("id")))
+		if err != nil {
+			writeError(w, err)
+			return
+		}
+		name, description, active := current.GetName(), current.GetDescription(), current.IsActive()
+		if request.Name != nil {
+			name = *request.Name
+		}
+		if request.Description != nil {
+			description = *request.Description
+		}
+		if request.IsActive != nil {
+			active = *request.IsActive
+		}
+		var command updatecategory.CategoryCommand
+		output, err := c.update.Execute(r.Context(), command.With(r.PathValue("id"), name, description, active))
+		if err != nil {
+			writeError(w, err)
+			return
+		}
+		response := responseFromUpdate(*output)
+		response.Links = categoryLinks(response.ID)
+		writeJSON(w, http.StatusOK, response)
+		return
+	}
 	var request categoryRequest
 	if !decodeJSON(w, r, &request) {
+		return
+	}
+	if request.Name == "" {
+		writeError(w, errors.New("PUT requires name"))
 		return
 	}
 	var command updatecategory.CategoryCommand
@@ -90,10 +139,15 @@ func (c *Controller) Update(w http.ResponseWriter, r *http.Request) {
 		writeError(w, err)
 		return
 	}
-	writeJSON(w, http.StatusOK, responseFromUpdate(*output))
+	response := responseFromUpdate(*output)
+	response.Links = categoryLinks(response.ID)
+	writeJSON(w, http.StatusOK, response)
 }
 
 func (c *Controller) Delete(w http.ResponseWriter, r *http.Request) {
+	if !validID(w, r.PathValue("id")) {
+		return
+	}
 	var command deletecategory.CategoryCommand
 	if err := c.delete.Execute(r.Context(), command.With(r.PathValue("id"))); err != nil {
 		writeError(w, err)
@@ -107,14 +161,20 @@ type categoryRequest struct {
 	Description string `json:"description"`
 	IsActive    bool   `json:"is_active"`
 }
+type categoryPatchRequest struct {
+	Name        *string `json:"name"`
+	Description *string `json:"description"`
+	IsActive    *bool   `json:"is_active"`
+}
 type categoryResponse struct {
-	ID          string  `json:"id"`
-	Name        string  `json:"name"`
-	Description string  `json:"description"`
-	IsActive    bool    `json:"is_active"`
-	CreatedAt   string  `json:"created_at"`
-	UpdatedAt   string  `json:"updated_at"`
-	DeletedAt   *string `json:"deleted_at,omitempty"`
+	ID          string            `json:"id"`
+	Name        string            `json:"name"`
+	Description string            `json:"description"`
+	IsActive    bool              `json:"is_active"`
+	CreatedAt   string            `json:"created_at"`
+	UpdatedAt   string            `json:"updated_at"`
+	DeletedAt   *string           `json:"deleted_at,omitempty"`
+	Links       map[string]string `json:"_links"`
 }
 
 type categoryListResponse struct {
@@ -122,6 +182,7 @@ type categoryListResponse struct {
 	PerPage     int                `json:"per_page"`
 	Total       int64              `json:"total"`
 	Items       []categoryResponse `json:"items"`
+	Links       map[string]string  `json:"_links"`
 }
 
 func responseFromList(o listcategory.CategoryOutput) categoryResponse {
@@ -140,8 +201,13 @@ func responseFromUpdate(o updatecategory.CategoryOutput) categoryResponse {
 }
 
 func decodeJSON(w http.ResponseWriter, r *http.Request, target any) bool {
-	if err := json.NewDecoder(r.Body).Decode(target); err != nil {
+	decoder := json.NewDecoder(r.Body)
+	if err := decoder.Decode(target); err != nil {
 		writeJSON(w, http.StatusBadRequest, map[string]string{"error": "invalid request body"})
+		return false
+	}
+	if decoder.Decode(&struct{}{}) == nil {
+		writeJSON(w, http.StatusBadRequest, map[string]string{"error": "request body must contain a single JSON value"})
 		return false
 	}
 	return true
@@ -153,13 +219,13 @@ func writeJSON(w http.ResponseWriter, status int, value any) {
 }
 func writeError(w http.ResponseWriter, err error) {
 	status := http.StatusInternalServerError
-	if errors.Is(err, strconv.ErrSyntax) || strings.Contains(err.Error(), "validation failed") || strings.Contains(err.Error(), "id cannot be empty") {
+	if errors.Is(err, strconv.ErrSyntax) || strings.Contains(err.Error(), "validation failed") || strings.Contains(err.Error(), "id cannot be empty") || strings.Contains(err.Error(), "valid UUID") || strings.Contains(err.Error(), "requires name") {
 		status = http.StatusBadRequest
 	}
 	if strings.Contains(err.Error(), "was not found") {
 		status = http.StatusNotFound
 	}
-	writeJSON(w, status, map[string]string{"error": err.Error()})
+	writeJSON(w, status, map[string]any{"type": "about:blank", "title": http.StatusText(status), "status": status, "detail": err.Error()})
 }
 func queryInt(r *http.Request, key string, fallback int) int {
 	value, err := strconv.Atoi(r.URL.Query().Get(key))
@@ -167,4 +233,18 @@ func queryInt(r *http.Request, key string, fallback int) int {
 		return fallback
 	}
 	return value
+}
+
+func validID(w http.ResponseWriter, id string) bool {
+	if _, err := uuid.Parse(id); err != nil {
+		writeError(w, errors.New("id must be a valid UUID"))
+		return false
+	}
+	return true
+}
+
+func categoryURL(id string) string { return "/categories/" + id }
+
+func categoryLinks(id string) map[string]string {
+	return map[string]string{"self": categoryURL(id), "collection": "/categories"}
 }
