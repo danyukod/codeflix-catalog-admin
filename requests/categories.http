@@ -1,5 +1,15 @@
 @baseUrl = http://localhost:8080
-@categoryId = substitua-pelo-id
+@categoryId = 453b23f6-806e-4aa6-98c1-d1f2894dc207
+
+### Criar categoria
+POST {{baseUrl}}/categories
+Content-Type: application/json
+
+{
+  "name": "Ação",
+  "description": "Filmes e séries de ação",
+  "is_active": true
+}
 
 ### Listar categorias
 GET {{baseUrl}}/categories
@@ -12,16 +22,6 @@ Accept: application/json
 ### Buscar categoria por ID
 GET {{baseUrl}}/categories/{{categoryId}}
 Accept: application/json
-
-### Criar categoria
-POST {{baseUrl}}/categories
-Content-Type: application/json
-
-{
-  "name": "Ação",
-  "description": "Filmes e séries de ação",
-  "is_active": true
-}
 
 ### Atualizar categoria
 PUT {{baseUrl}}/categories/{{categoryId}}
