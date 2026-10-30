@@ -154,6 +154,26 @@ func TestCategoryAPIValidationError(t *testing.T) {
 	require.NoError(t, response.Body.Close())
 }
 
+func TestCategoryAPINotFoundByID(t *testing.T) {
+	app := newTestApp(t)
+	notFoundID := "00000000-0000-0000-0000-000000000000"
+
+	for _, test := range []struct {
+		method string
+		path   string
+		body   string
+	}{
+		{http.MethodGet, "/categories/" + notFoundID, ""},
+		{http.MethodPut, "/categories/" + notFoundID, `{"name":"Films","description":"Feature films","is_active":true}`},
+		{http.MethodPatch, "/categories/" + notFoundID, `{"description":"Feature films"}`},
+		{http.MethodDelete, "/categories/" + notFoundID, ""},
+	} {
+		response := app.request(t, test.method, test.path, test.body)
+		require.Equal(t, http.StatusNotFound, response.StatusCode, test.method)
+		require.NoError(t, response.Body.Close())
+	}
+}
+
 func (app *testApp) request(t *testing.T, method, path, body string) *http.Response {
 	t.Helper()
 

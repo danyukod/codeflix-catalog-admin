@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/danyukod/codeflix-catalog-admin/internal/domain/category"
+	"github.com/danyukod/codeflix-catalog-admin/internal/domain/exception"
 	"github.com/danyukod/codeflix-catalog-admin/internal/domain/pagination"
 )
 
@@ -70,7 +71,7 @@ func (r *Repository) DeleteById(ctx context.Context, id category.Id) error {
 		return fmt.Errorf("delete category: get affected rows: %w", err)
 	}
 	if rowsAffected == 0 {
-		return errors.New("category not found")
+		return &exception.NotFoundError{Entity: "category", ID: id.GetValue()}
 	}
 
 	return nil
@@ -96,7 +97,7 @@ func (r *Repository) FindById(ctx context.Context, id category.Id) (*category.Ca
 
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
-			return nil, errors.New("category not found")
+			return nil, &exception.NotFoundError{Entity: "category", ID: id.GetValue()}
 		}
 		return nil, fmt.Errorf("find category by id: %w", err)
 	}
@@ -136,7 +137,7 @@ func (r *Repository) Update(ctx context.Context, cat *category.Category) error {
 		return fmt.Errorf("update category: get affected rows: %w", err)
 	}
 	if rowsAffected == 0 {
-		return errors.New("category not found")
+		return &exception.NotFoundError{Entity: "category", ID: cat.GetId().GetValue()}
 	}
 
 	return nil

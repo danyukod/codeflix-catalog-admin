@@ -7,6 +7,7 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/danyukod/codeflix-catalog-admin/internal/domain/exception"
 	"github.com/danyukod/codeflix-catalog-admin/internal/domain/validation"
 	"github.com/google/uuid"
 )
@@ -35,12 +36,13 @@ func WriteError(w http.ResponseWriter, err error) {
 		WriteJSON(w, http.StatusBadRequest, map[string]any{"type": "https://api.codeflix.com/errors/validation", "title": "Validation failed", "status": http.StatusBadRequest, "detail": validationErr.Error(), "errors": validationErr.Messages})
 		return
 	}
+	if _, ok := errors.AsType[*exception.NotFoundError](err); ok {
+		WriteJSON(w, http.StatusNotFound, map[string]any{"type": "about:blank", "title": http.StatusText(http.StatusNotFound), "status": http.StatusNotFound, "detail": err.Error()})
+		return
+	}
 	status := http.StatusInternalServerError
 	if errors.Is(err, strconv.ErrSyntax) || strings.Contains(err.Error(), "id cannot be empty") || strings.Contains(err.Error(), "valid UUID") {
 		status = http.StatusBadRequest
-	}
-	if strings.Contains(err.Error(), "was not found") {
-		status = http.StatusNotFound
 	}
 	WriteJSON(w, status, map[string]any{"type": "about:blank", "title": http.StatusText(status), "status": status, "detail": err.Error()})
 }

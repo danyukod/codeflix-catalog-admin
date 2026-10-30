@@ -6,6 +6,7 @@ import (
 	"testing"
 
 	"github.com/danyukod/codeflix-catalog-admin/internal/domain/category"
+	"github.com/danyukod/codeflix-catalog-admin/internal/domain/exception"
 	"github.com/danyukod/codeflix-catalog-admin/internal/tests/mocks"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
@@ -79,7 +80,7 @@ func TestDeleteCategoryUsecase(t *testing.T) {
 		gateway.AssertExpectations(t)
 	})
 
-	t.Run("given a not found id when calls delete category should return nil error", func(t *testing.T) {
+	t.Run("given a not found id when calls delete category should return not found error", func(t *testing.T) {
 		gateway := new(mocks.CategoryGatewayMock)
 		useCase := NewDeleteCategoryUseCase(gateway)
 		expectedID := category.NewCategory("Film", "", true).GetId()
@@ -91,7 +92,10 @@ func TestDeleteCategoryUsecase(t *testing.T) {
 
 		err := useCase.Execute(ctx, aCommand)
 
-		assert.Nil(t, err)
+		notFoundErr, ok := errors.AsType[*exception.NotFoundError](err)
+		assert.True(t, ok)
+		assert.Equal(t, "category", notFoundErr.Entity)
+		assert.Equal(t, expectedID.GetValue(), notFoundErr.ID)
 		gateway.AssertCalled(t, "FindById", mock.Anything, expectedID)
 		gateway.AssertNotCalled(t, "DeleteById")
 		gateway.AssertExpectations(t)

@@ -6,6 +6,7 @@ import (
 	"testing"
 
 	"github.com/danyukod/codeflix-catalog-admin/internal/domain/category"
+	"github.com/danyukod/codeflix-catalog-admin/internal/domain/exception"
 	"github.com/danyukod/codeflix-catalog-admin/internal/tests/mocks"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
@@ -161,6 +162,10 @@ func TestUpdateCategoryUsecase(t *testing.T) {
 
 		assert.Error(t, err)
 		assert.EqualError(t, err, "category with ID "+expectedID.GetValue()+" was not found")
+		notFoundErr, ok := errors.AsType[*exception.NotFoundError](err)
+		assert.True(t, ok)
+		assert.Equal(t, "category", notFoundErr.Entity)
+		assert.Equal(t, expectedID.GetValue(), notFoundErr.ID)
 		assert.Nil(t, actualOutput)
 
 		gateway.AssertCalled(t, "FindById", mock.Anything, expectedID)

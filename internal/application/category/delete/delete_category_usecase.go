@@ -5,6 +5,7 @@ import (
 	"fmt"
 
 	"github.com/danyukod/codeflix-catalog-admin/internal/domain/category"
+	"github.com/danyukod/codeflix-catalog-admin/internal/domain/exception"
 )
 
 type CategoryUseCase struct {
@@ -33,7 +34,7 @@ func (uc *CategoryUseCase) Execute(ctx context.Context, aCommand *CategoryComman
 		return err
 	}
 	if aCategory == nil {
-		return nil
+		return &exception.NotFoundError{Entity: "category", ID: anId.GetValue()}
 	}
 
 	return uc.gateway.DeleteById(ctx, anId)
