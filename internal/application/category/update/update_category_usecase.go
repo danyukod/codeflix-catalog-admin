@@ -3,10 +3,11 @@ package update
 import (
 	"context"
 	"fmt"
-	"strings"
 
 	"github.com/danyukod/codeflix-catalog-admin/internal/domain/category"
+	"github.com/danyukod/codeflix-catalog-admin/internal/domain/exception"
 	"github.com/danyukod/codeflix-catalog-admin/internal/domain/exception/handler"
+	"github.com/danyukod/codeflix-catalog-admin/internal/domain/validation"
 )
 
 type CategoryUseCase struct {
@@ -39,7 +40,7 @@ func (uc *CategoryUseCase) Execute(ctx context.Context, aCommand *CategoryComman
 		return nil, err
 	}
 	if aCategory == nil {
-		return nil, fmt.Errorf("category with ID %s was not found", anId.GetValue())
+		return nil, &exception.NotFoundError{Entity: "category", ID: anId.GetValue()}
 	}
 
 	aCategory.Update(aName, aDescription, isActive)
@@ -48,7 +49,7 @@ func (uc *CategoryUseCase) Execute(ctx context.Context, aCommand *CategoryComman
 	aCategory.Validate(notification)
 
 	if notification.HasError() {
-		return nil, fmt.Errorf("validation failed: %s", joinValidationMessages(notification))
+		return nil, validation.NewValidationError(notification.GetErrors())
 	}
 
 	err = uc.gateway.Update(ctx, aCategory)
@@ -60,17 +61,4 @@ func (uc *CategoryUseCase) Execute(ctx context.Context, aCommand *CategoryComman
 	out := updateCategoryOutput.From(*aCategory)
 
 	return out, nil
-}
-
-func joinValidationMessages(n *handler.Notification) string {
-	errs := n.GetErrors()
-	if len(errs) == 0 {
-		return ""
-	}
-
-	messages := make([]string, 0, len(errs))
-	for _, e := range errs {
-		messages = append(messages, e.Message)
-	}
-	return strings.Join(messages, "; ")
 }

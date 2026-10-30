@@ -20,8 +20,8 @@ func NewRouter(controller *categorycontroller.Controller) stdhttp.Handler {
 	mux.HandleFunc("GET /categories", controller.List)
 	mux.HandleFunc("POST /categories", controller.Create)
 	mux.HandleFunc("GET /categories/{id}", controller.Get)
-	mux.HandleFunc("PUT /categories/{id}", controller.Update)
-	mux.HandleFunc("PATCH /categories/{id}", controller.Update)
+	mux.HandleFunc("PUT /categories/{id}", controller.Replace)
+	mux.HandleFunc("PATCH /categories/{id}", controller.Patch)
 	mux.HandleFunc("DELETE /categories/{id}", controller.Delete)
 	return mux
 }

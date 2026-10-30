@@ -91,6 +91,7 @@ func TestCategoryAPI(t *testing.T) {
 	}
 	response := app.request(t, http.MethodPost, "/categories", `{"name":"Films","description":"Feature films","is_active":true}`)
 	require.Equal(t, http.StatusCreated, response.StatusCode)
+	require.NotEmpty(t, response.Header.Get("Location"))
 	require.NoError(t, json.NewDecoder(response.Body).Decode(&created))
 	require.NotEmpty(t, created.ID)
 	require.NoError(t, response.Body.Close())
@@ -100,6 +101,7 @@ func TestCategoryAPI(t *testing.T) {
 	var found map[string]any
 	require.NoError(t, json.NewDecoder(response.Body).Decode(&found))
 	require.Equal(t, "Films", found["name"])
+	require.Equal(t, "/categories/"+created.ID, found["_links"].(map[string]any)["self"])
 	require.NoError(t, response.Body.Close())
 
 	response = app.request(t, http.MethodPut, "/categories/"+created.ID, `{"name":"Updated films","description":"Updated description","is_active":true}`)
@@ -115,6 +117,15 @@ func TestCategoryAPI(t *testing.T) {
 	require.Equal(t, int64(1), listed.Total)
 	require.NoError(t, response.Body.Close())
 
+	response = app.request(t, http.MethodPatch, "/categories/"+created.ID, `{"description":"Patched description"}`)
+	require.Equal(t, http.StatusOK, response.StatusCode)
+	var patched map[string]any
+	require.NoError(t, json.NewDecoder(response.Body).Decode(&patched))
+	require.Equal(t, "Updated films", patched["name"])
+	require.Equal(t, "Patched description", patched["description"])
+	require.True(t, patched["is_active"].(bool))
+	require.NoError(t, response.Body.Close())
+
 	response = app.request(t, http.MethodDelete, "/categories/"+created.ID, "")
 	require.Equal(t, http.StatusNoContent, response.StatusCode)
 	require.NoError(t, response.Body.Close())
@@ -123,6 +134,44 @@ func TestCategoryAPI(t *testing.T) {
 	err := app.db.QueryRowContext(t.Context(), "SELECT active FROM categories WHERE id = ?", created.ID).Scan(&active)
 	require.NoError(t, err)
 	require.False(t, active)
+}
+
+func TestCategoryAPIValidationError(t *testing.T) {
+	app := newTestApp(t)
+	response := app.request(t, http.MethodPost, "/categories", `{"name":"","description":"Invalid","is_active":true}`)
+	require.Equal(t, http.StatusBadRequest, response.StatusCode)
+	var problem struct {
+		Type   string   `json:"type"`
+		Title  string   `json:"title"`
+		Status int      `json:"status"`
+		Errors []string `json:"errors"`
+	}
+	require.NoError(t, json.NewDecoder(response.Body).Decode(&problem))
+	require.Equal(t, "https://api.codeflix.com/errors/validation", problem.Type)
+	require.Equal(t, "Validation failed", problem.Title)
+	require.Equal(t, http.StatusBadRequest, problem.Status)
+	require.Contains(t, problem.Errors, "'name' should not be empty")
+	require.NoError(t, response.Body.Close())
+}
+
+func TestCategoryAPINotFoundByID(t *testing.T) {
+	app := newTestApp(t)
+	notFoundID := "00000000-0000-0000-0000-000000000000"
+
+	for _, test := range []struct {
+		method string
+		path   string
+		body   string
+	}{
+		{http.MethodGet, "/categories/" + notFoundID, ""},
+		{http.MethodPut, "/categories/" + notFoundID, `{"name":"Films","description":"Feature films","is_active":true}`},
+		{http.MethodPatch, "/categories/" + notFoundID, `{"description":"Feature films"}`},
+		{http.MethodDelete, "/categories/" + notFoundID, ""},
+	} {
+		response := app.request(t, test.method, test.path, test.body)
+		require.Equal(t, http.StatusNotFound, response.StatusCode, test.method)
+		require.NoError(t, response.Body.Close())
+	}
 }
 
 func (app *testApp) request(t *testing.T, method, path, body string) *http.Response {

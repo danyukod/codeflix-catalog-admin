@@ -5,6 +5,7 @@ import (
 	"fmt"
 
 	"github.com/danyukod/codeflix-catalog-admin/internal/domain/category"
+	"github.com/danyukod/codeflix-catalog-admin/internal/domain/exception"
 )
 
 type CategoryUseCase struct {
@@ -33,7 +34,7 @@ func (uc *CategoryUseCase) Execute(ctx context.Context, aCommand *CategoryComman
 		return nil, err
 	}
 	if aCategory == nil {
-		return nil, fmt.Errorf("category with ID %s was not found", anId.GetValue())
+		return nil, &exception.NotFoundError{Entity: "category", ID: anId.GetValue()}
 	}
 
 	var output CategoryOutput
