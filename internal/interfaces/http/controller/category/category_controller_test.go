@@ -6,6 +6,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/danyukod/codeflix-catalog-admin/internal/domain/exception"
 	"github.com/danyukod/codeflix-catalog-admin/internal/domain/validation"
 	"github.com/danyukod/codeflix-catalog-admin/internal/interfaces/http/shared"
 )
@@ -24,5 +25,15 @@ func TestWriteErrorReturnsStructuredValidationProblem(t *testing.T) {
 		if !strings.Contains(body, expected) {
 			t.Fatalf("response %q does not contain %q", body, expected)
 		}
+	}
+}
+
+func TestWriteErrorReturnsNotFoundForMissingCategory(t *testing.T) {
+	recorder := httptest.NewRecorder()
+
+	shared.WriteError(recorder, &exception.NotFoundError{Entity: "category", ID: "missing-id"})
+
+	if recorder.Code != http.StatusNotFound {
+		t.Fatalf("status = %d, want %d", recorder.Code, http.StatusNotFound)
 	}
 }

@@ -126,7 +126,7 @@ func TestRepository_FindById(t *testing.T) {
 		_, err := repo.FindById(t.Context(), nonExistentID)
 
 		assert.Error(t, err)
-		assert.Contains(t, err.Error(), "category not found")
+		assert.Contains(t, err.Error(), "was not found")
 	})
 
 	t.Run("given category with null description when finding should return empty description", func(t *testing.T) {
@@ -197,7 +197,7 @@ func TestRepository_Update(t *testing.T) {
 		err := repo.Update(t.Context(), cat)
 
 		assert.Error(t, err)
-		assert.Contains(t, err.Error(), "category not found")
+		assert.Contains(t, err.Error(), "was not found")
 	})
 
 	t.Run("given deactivated category when updating should set deleted_at", func(t *testing.T) {
@@ -248,7 +248,7 @@ func TestRepository_DeleteById(t *testing.T) {
 		err := repo.DeleteById(t.Context(), nonExistentID)
 
 		assert.Error(t, err)
-		assert.Contains(t, err.Error(), "category not found")
+		assert.Contains(t, err.Error(), "was not found")
 	})
 
 	t.Run("given already deleted category when deleting should return error", func(t *testing.T) {
@@ -266,7 +266,7 @@ func TestRepository_DeleteById(t *testing.T) {
 		// Second delete should fail
 		err = repo.DeleteById(t.Context(), cat.GetId().(category.Id))
 		assert.Error(t, err)
-		assert.Contains(t, err.Error(), "category not found")
+		assert.Contains(t, err.Error(), "was not found")
 	})
 }
 
